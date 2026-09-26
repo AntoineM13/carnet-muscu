@@ -1,0 +1,66 @@
+/* ==========================================================================
+   Jetons de design : couleurs, typographies, espacements.
+   Thème sombre unique, une seule couleur d'accent (vert citron).
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  src: url('../assets/fonts/BricolageGrotesque-wght.woff2') format('woff2');
+  font-weight: 200 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('../assets/fonts/DMSans-wght.woff2') format('woff2');
+  font-weight: 100 1000;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Fonds */
+  --bg: #0b0c0d;
+  --surface: #141618;
+  --surface-2: #1b1e21;
+  --surface-3: #24282c;
+  --border: #262a2e;
+  --border-strong: #353a40;
+
+  /* Texte */
+  --text: #f1f3ee;
+  --text-2: #a4aaa3;
+  --text-3: #6f756e;
+
+  /* Accent (unique) */
+  --accent: #c8f169;
+  --accent-ink: #151b06;
+  --accent-soft: rgba(200, 241, 105, 0.12);
+  --accent-line: rgba(200, 241, 105, 0.35);
+
+  /* Signaux (usage limité : douleur, suppression) */
+  --warn: #f0a55e;
+  --warn-soft: rgba(240, 165, 94, 0.12);
+  --danger: #ff6b5e;
+  --danger-soft: rgba(255, 107, 94, 0.12);
+
+  /* Typographies */
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-text: 'DM Sans', system-ui, -apple-system, sans-serif;
+
+  /* Rayons & espacements */
+  --r-lg: 20px;
+  --r-md: 14px;
+  --r-sm: 10px;
+  --gap: 16px;
+  --tap: 44px;
+
+  /* Zones sûres iOS */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+
+  --tabbar-h: 60px;
+  --topbar-h: 52px;
+}

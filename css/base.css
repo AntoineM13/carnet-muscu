@@ -1,0 +1,114 @@
+/* ==========================================================================
+   Base : reset, typographie, structure d'écran.
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: 16px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.1;
+}
+h1 { font-size: 30px; }
+h2 { font-size: 20px; }
+h3 { font-size: 17px; }
+p { margin: 0; }
+
+/* Chiffres tabulaires : charges, reps, chrono */
+.num, input[inputmode='decimal'], input[inputmode='numeric'] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+button { cursor: pointer; border: 0; background: none; padding: 0; touch-action: manipulation; }
+a { color: var(--accent); text-decoration: none; }
+
+svg.icon { width: 22px; height: 22px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+svg.icon.sm { width: 18px; height: 18px; }
+svg.icon.lg { width: 26px; height: 26px; }
+
+.muted { color: var(--text-2); }
+.faint { color: var(--text-3); }
+.accent { color: var(--accent); }
+.small { font-size: 13px; }
+.tiny { font-size: 12px; }
+.center { text-align: center; }
+.row-flex { display: flex; align-items: center; gap: 10px; }
+.grow { flex: 1; min-width: 0; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.stack-lg { display: flex; flex-direction: column; gap: 24px; }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hidden { display: none !important; }
+.eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); font-weight: 600; }
+
+/* ----------------------------------------------------------- Structure -- */
+
+#app { min-height: 100dvh; }
+
+.screen {
+  padding: calc(var(--sat) + 12px) calc(16px + var(--sar)) calc(var(--tabbar-h) + var(--sab) + 28px) calc(16px + var(--sal));
+  max-width: 640px;
+  margin: 0 auto;
+}
+.screen.no-tabs { padding-bottom: calc(var(--sab) + 32px); }
+
+.screen-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0 20px;
+}
+.screen-head .sub { color: var(--text-2); font-size: 14px; margin-top: 4px; }
+
+/* Barre de titre des sous-écrans */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: calc(var(--topbar-h) + var(--sat));
+  padding: var(--sat) calc(8px + var(--sar)) 0 calc(4px + var(--sal));
+  margin: calc(-1 * (var(--sat) + 12px)) calc(-16px - var(--sar)) 12px calc(-16px - var(--sal));
+  background: rgba(11, 12, 13, 0.86);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.topbar .title { flex: 1; min-width: 0; font-family: var(--font-display); font-weight: 600; font-size: 17px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topbar .spacer { width: var(--tap); }
+
+.section { margin-top: 28px; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+.section-head h2 { font-size: 18px; }
+.section-head .link { font-size: 14px; font-weight: 500; color: var(--accent); padding: 8px 0 8px 12px; }
+
+.empty { padding: 32px 16px; text-align: center; color: var(--text-2); border: 1px dashed var(--border-strong); border-radius: var(--r-lg); }
+.empty svg.icon { width: 32px; height: 32px; color: var(--text-3); margin-bottom: 8px; }
