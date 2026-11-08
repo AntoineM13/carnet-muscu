@@ -10,7 +10,9 @@
  *  - runs      : sorties de course à pied
  */
 
-const DB_NAME = 'carnet-muscu';
+import { IS_TEST_ENV, dbNameFor } from './env.js';
+
+const DB_NAME = dbNameFor(IS_TEST_ENV);
 const DB_VERSION = 1;
 export const COLLECTIONS = ['exercises', 'templates', 'sessions', 'goals', 'runs'];
 

@@ -19,7 +19,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
   - la sauvegarde complète ;
   - le programme seul (séances, bibliothèque, planning par défaut), pour le partager sans écraser l'historique de l'autre. L'import fusionne les exercices par id et conserve les notes et marqueurs de douleur locaux.
 - Hébergement : GitHub Pages, dépôt `antoinem13/carnet-muscu`, branche `master` (= production, utilisée par les 3 amis).
-- Environnement de test : dépôt `antoinem13/carnet-muscu-test` (GitHub Pages), pour tester sur téléphone sans toucher la production.
+- Environnement de test : dépôt `antoinem13/carnet-muscu-test` (GitHub Pages), pour tester sur téléphone sans toucher la production. Même domaine que la production, donc isolation explicite (`js/core/env.js`) : base IndexedDB `carnet-muscu-test`, préfixe de cache `cm-test-`, repère « TEST » à l'écran.
 
 ## 2b. Synchronisation en ligne (Supabase)
 - **Local d'abord** : IndexedDB reste la source de vérité de l'appareil. L'app marche sans réseau ; la synchro se fait en arrière-plan (au démarrage, 3 s après une modification, au retour du réseau, toutes les 60 s).
@@ -131,3 +131,4 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-11-08 : choix de Supabase (gratuit) plutôt qu'un hébergement 100 % Mac mini : zéro maintenance, et rien à installer pour les amis (pas de Tailscale). Le Mac mini sert à la sauvegarde nocturne.
 - 2026-11-08 : synchronisation « local d'abord » développée sur la branche `sync-supabase`, validée par Antoine sur son Mac contre le vrai Supabase (création de compte, envoi, téléphone neuf, synchro dans les deux sens, mauvais mot de passe).
 - 2026-11-08 : règle de publication : **rien n'est publié sur `master` tant que ce n'est pas stable et validé par Antoine**. Avant chaque publication qui touche aux données, les 3 utilisateurs font un export de sauvegarde.
+- 2026-11-08 : la version de test utilise sa propre base locale et son propre cache, car elle partage le domaine `antoinem13.github.io` avec la production : sinon elle aurait modifié les vraies données du téléphone.

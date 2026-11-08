@@ -9,6 +9,7 @@ import { toast, closeAllSheets } from './ui/overlay.js';
 import { keepAwake } from './ui/device.js';
 import { registerModules } from './modules.js';
 import { initSync, onSyncStatus, syncLabel, syncStatus } from './core/sync.js';
+import { IS_TEST_ENV } from './core/env.js';
 
 import { renderHome } from './screens/home.js';
 import { renderProgram, renderSchedule } from './screens/program.js';
@@ -72,6 +73,7 @@ function render({ navigated = false } = {}) {
 }
 
 async function boot() {
+  if (IS_TEST_ENV) { document.body.classList.add('env-test'); document.title = 'TEST · ' + document.title; }
   setErrorHandler((e) => { console.error(e); toast('Échec de l’enregistrement : ' + (e?.message || e)); });
   try {
     await loadAll();
