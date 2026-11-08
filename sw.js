@@ -6,7 +6,7 @@
  * (sinon les téléphones garderont l'ancienne version en cache).
  * `node tools/check-sw.mjs` vérifie que la liste ASSETS est complète.
  */
-const VERSION = 'v1.4.1-sync';
+const VERSION = 'v1.4.2-sync';
 // Version de test (même domaine que la production) : préfixe de cache distinct,
 // pour que ni l'une ni l'autre n'efface le cache de l'autre à l'activation.
 const IS_TEST = /\/carnet-muscu-test(\/|$)/.test(self.location.pathname);
@@ -79,7 +79,12 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // `cache: 'reload'` : toujours télécharger depuis le serveur. Sans cela, le
+  // navigateur peut resservir des fichiers de SA mémoire HTTP (GitHub Pages :
+  // 10 min), et la nouvelle version serait installée avec les anciens fichiers.
+  event.waitUntil(caches.open(CACHE)
+    .then((c) => c.addAll(ASSETS.map((url) => new Request(url, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {

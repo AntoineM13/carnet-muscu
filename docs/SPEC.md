@@ -13,7 +13,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 ## 2. Contraintes techniques
 - HTML, CSS et JS vanilla en modules ES, sans build, sans CDN. Les polices (Bricolage Grotesque pour les titres et chiffres, DM Sans pour le texte) sont embarquées.
 - Données dans IndexedDB, avec sauvegarde automatique à chaque action.
-- Service worker en « cache d'abord » (`sw.js`) : incrémenter `VERSION` à chaque publication.
+- Service worker en « cache d'abord » (`sw.js`) : incrémenter `VERSION` à chaque publication. L'installation télécharge les fichiers avec `cache: 'reload'` (sinon la mémoire HTTP de GitHub Pages, 10 min, pouvait installer une nouvelle version avec les anciens fichiers). À l'ouverture, si une nouvelle version s'active dans les 20 premières secondes, l'app se recharge seule ; elle vérifie aussi les mises à jour à chaque retour au premier plan.
 - Écran maintenu allumé pendant une séance (Wake Lock, avec repli silencieux si non supporté).
 - Deux exports JSON :
   - la sauvegarde complète ;
@@ -148,3 +148,4 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-11-08 : onglet « Progrès » à la place de « Objectifs » (choix d'Antoine : courbes par exercice, tableau par séance, résumé de la semaine ; pas d'alertes de stagnation pour l'instant). Suivi séance par séance pour ne pas mélanger force et volume.
 - 2026-11-08 : banque d'exercices : choix « intégrée + ajouts partagés » (banque FR/EN rédigée dans l'app, plus une table Supabase commune pour les ajouts des 3 utilisateurs).
 - 2026-11-08 : message « Annuler » déplacé en haut de l'écran (retour d'Antoine : il survolait le bas) ; repère TEST intégré à l'en-tête (la pastille fixe rendait l'en-tête flou).
+- 2026-11-08 : correction de la mise à jour bloquée (retour d'Antoine : l'app restait sur l'ancienne version). Cause : `addAll` servait les fichiers depuis la mémoire HTTP du navigateur (GitHub Pages : max-age=600) ; reproduit puis corrigé (`cache: 'reload'`, rechargement automatique à l'ouverture). Le bug existe aussi en production : il sera corrigé par la mise en production.

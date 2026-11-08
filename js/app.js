@@ -98,16 +98,29 @@ async function boot() {
   registerServiceWorker();
 }
 
+const openedAt = Date.now();
+
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
-  navigator.serviceWorker.register('./sw.js').then((reg) => {
-    reg.addEventListener('updatefound', () => {
-      const nw = reg.installing;
-      nw?.addEventListener('statechange', () => {
-        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-          toast('Nouvelle version installée. Elle sera active à la prochaine ouverture.', { duration: 5000 });
-        }
-      });
+  const hadController = !!navigator.serviceWorker.controller;
+  // Nouvelle version activée : si l'app vient d'être ouverte, on recharge tout
+  // de suite pour l'afficher (rien n'est perdu : tout est déjà enregistré).
+  // Sinon (en pleine saisie), on prévient seulement.
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return;
+    if (Date.now() - openedAt < 20000 && !document.querySelector('input:focus, textarea:focus')) {
+      reloading = true;
+      location.reload();
+    } else {
+      toast('Nouvelle version installée : elle s’affichera à la prochaine ouverture.', { duration: 5000 });
+    }
+  });
+  navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then((reg) => {
+    // Sur téléphone, l'app reste souvent en arrière-plan : on vérifie aussi
+    // s'il existe une mise à jour à chaque retour dans l'app.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update().catch(() => {});
     });
   }).catch(() => { /* hors-ligne indisponible (ex. file://) */ });
 }
