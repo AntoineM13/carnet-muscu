@@ -3,8 +3,10 @@
 Document de référence du projet. **Claude le tient à jour à chaque évolution** : ajouter les nouvelles décisions au journal (dernière section), corriger les sections qui changent.
 
 ## 1. Contexte
-- App de suivi de musculation pour iPhone, usage personnel : Antoine et un collègue qui suivent le même programme. Pas d'App Store.
-- PWA installée depuis Safari, 100 % hors-ligne, sans compte ni backend. Chaque personne a l'app sur son propre téléphone, avec un seul profil par téléphone.
+- App de suivi de musculation, usage personnel : **3 utilisateurs** (Antoine, un collègue, un ami) qui suivent le même programme. Pas d'App Store.
+- **iPhone ET Android** : PWA installée depuis Safari (iOS) ou Chrome (Android). Ne rien coder de spécifique à iOS sans équivalent Android.
+- 100 % utilisable hors-ligne. Chaque personne a l'app sur son propre téléphone, avec un seul profil par téléphone.
+- **Synchronisation en ligne optionnelle (Supabase)**, voir §2b. Sans compte, l'app reste 100 % locale comme avant.
 - Objectif : un carnet **simple et rapide entre deux séries** (une main, petit écran) et surtout **flexible**, qu'on peut adapter en direct sans casser le programme de base.
 - Principe central : chaque séance enregistrée alimente la suivante. Sur chaque exercice, on voit ce qu'on a fait la dernière fois et ce qu'on vise aujourd'hui.
 
@@ -16,7 +18,21 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - Deux exports JSON :
   - la sauvegarde complète ;
   - le programme seul (séances, bibliothèque, planning par défaut), pour le partager sans écraser l'historique de l'autre. L'import fusionne les exercices par id et conserve les notes et marqueurs de douleur locaux.
-- Hébergement : GitHub Pages, dépôt `antoinem13/carnet-muscu`, branche `master`.
+- Hébergement : GitHub Pages, dépôt `antoinem13/carnet-muscu`, branche `master` (= production, utilisée par les 3 amis).
+- Environnement de test : dépôt `antoinem13/carnet-muscu-test` (GitHub Pages), pour tester sur téléphone sans toucher la production.
+
+## 2b. Synchronisation en ligne (Supabase)
+- **Local d'abord** : IndexedDB reste la source de vérité de l'appareil. L'app marche sans réseau ; la synchro se fait en arrière-plan (au démarrage, 3 s après une modification, au retour du réseau, toutes les 60 s).
+- Projet Supabase gratuit `carnet-muscu`, région Europe. URL et clé **publishable** dans `js/data/sync-config.js` (clé publique par conception). **Jamais de clé `secret` / `service_role` ni de mot de passe de base dans le dépôt.**
+- Une seule table `public.docs` (schéma : `docs/supabase-schema.sql`) : `(user_id, collection, id)` → `data` JSON, `deleted`, `updated_at` (fixé par le serveur). RLS : chacun ne voit que ses lignes.
+- Collections synchronisées : exercises, templates, sessions, goals, runs, et `kv` (settings, schedule). `meta` (onboarding, séance active) reste propre à l'appareil.
+- Conflits :
+  - synchro normale : une modification locale en attente l'emporte ;
+  - **première synchro d'un appareil : le serveur l'emporte**, et les documents uniquement locaux sont envoyés. Un téléphone neuf ne peut pas écraser l'historique du compte.
+- Pagination par curseur `(updated_at, collection, id)` pour ne perdre aucune ligne à horodatage identique.
+- Connexion e-mail + mot de passe (client REST maison, sans bibliothèque : `js/core/supabase.js`). Moteur testable sous Node : `js/core/sync-engine.js`. Branchement : `js/core/sync.js`. Interface : `js/screens/account.js` (réglages + écran de premier lancement « J'ai déjà un compte »).
+- « Effacer toutes les données » déconnecte d'abord le compte (l'effacement local ne touche jamais le compte en ligne).
+- Plan gratuit Supabase : **pas de sauvegarde automatique** et pause après 1 semaine sans activité (réactivation d'un clic, données conservées). D'où la **sauvegarde nocturne sur le Mac mini d'Antoine** (voir `docs/PLAN.md`).
 
 ## 3. Design
 - Thème sombre, une seule couleur d'accent (vert citron #C8F169), fonds gris très foncés, cartes arrondies, bordures fines.
@@ -111,3 +127,7 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-09-26 : « Arrière d'épaule » est classé en haltères par défaut.
 - 2026-09-26 : la première semaine après l'installation n'est planifiée qu'à partir du jour même, pour éviter de faux « retards ».
 - 2026-09-26 : le résumé de fin propose « Mettre à jour le programme » quand la structure de la séance a changé.
+- 2026-11-08 : un 3e utilisateur rejoint le projet, sur Android. L'app doit rester multiplateforme.
+- 2026-11-08 : choix de Supabase (gratuit) plutôt qu'un hébergement 100 % Mac mini : zéro maintenance, et rien à installer pour les amis (pas de Tailscale). Le Mac mini sert à la sauvegarde nocturne.
+- 2026-11-08 : synchronisation « local d'abord » développée sur la branche `sync-supabase`, validée par Antoine sur son Mac contre le vrai Supabase (création de compte, envoi, téléphone neuf, synchro dans les deux sens, mauvais mot de passe).
+- 2026-11-08 : règle de publication : **rien n'est publié sur `master` tant que ce n'est pas stable et validé par Antoine**. Avant chaque publication qui touche aux données, les 3 utilisateurs font un export de sauvegarde.
