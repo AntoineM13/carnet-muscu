@@ -39,6 +39,7 @@ export function newItem({ exerciseId, target, slotId = null, alternatives = [], 
     ? ctx.prefill(exerciseId, target)
     : prefillSets(exerciseId, target.sets, ctx.sessions, {
       exercise, target, form: ctx.form || 'normal', settings: ctx.settings, mode: ctx.mode || null,
+      templateId: ctx.session?.templateId || null, excludeSessionId: ctx.session?.id || null,
     });
   return {
     id: uid('it'), exerciseId, slotId, alternatives, groupId, skipped: false, mode: null,

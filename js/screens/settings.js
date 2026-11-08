@@ -39,7 +39,8 @@ export function renderSettings({ backup } = {}) {
       h('div.list', null,
         switchRow('RPE', s.rpeEnabled, (v) => set({ rpeEnabled: v }), 'Champ optionnel, à titre informatif'),
         switchRow('Balayage entre exercices', s.swipeEnabled, (v) => set({ swipeEnabled: v }), 'Glisser horizontalement pour changer d’exercice'),
-        switchRow('Son en fin de repos', s.soundEnabled, (v) => set({ soundEnabled: v })),
+        switchRow('Chrono de repos', s.restTimerEnabled, (v) => set({ restTimerEnabled: v }), 'Se lance après chaque série validée. À couper si tu utilises ton propre chrono'),
+        s.restTimerEnabled && switchRow('Son en fin de repos', s.soundEnabled, (v) => set({ soundEnabled: v })),
         switchRow('Superset : repos après le tour complet', s.supersetRestAfterRound, (v) => set({ supersetRestAfterRound: v }), 'Sinon après chaque exercice'))),
 
     group('Nouveaux exercices du programme', '',

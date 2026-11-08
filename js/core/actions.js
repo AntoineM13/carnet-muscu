@@ -37,7 +37,7 @@ export function setPrefillHook(fn) { prefillHook = fn; }
 
 export function sessionCtx(session = null) {
   return {
-    getExercise, sessions: state.sessions, settings: state.settings, form: session?.form || 'normal',
+    getExercise, sessions: state.sessions, settings: state.settings, form: session?.form || 'normal', session,
     prefill: prefillHook ? (exerciseId, target) => prefillHook(exerciseId, target, session) : null,
   };
 }

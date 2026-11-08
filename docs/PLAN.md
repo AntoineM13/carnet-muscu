@@ -28,7 +28,12 @@ But : tester la version synchronisée sur iPhone et Android, en HTTPS, sans touc
 ## Étape 2 : intégrer les retours de la salle
 Antoine a des retours d'usage à transmettre. Les traiter **sur la branche `sync-supabase`**, les republier sur l'environnement de test, et les faire valider avant la production. On ne publie qu'une seule fois en production (une seule sauvegarde demandée aux amis).
 
-- [ ] Recueillir les retours d'Antoine (une question courte si une demande est ambiguë).
+- [x] Recueillir les retours d'Antoine (lot 1, 2026-11-08) :
+  - [x] chrono de repos désactivable (réglage par compte) ;
+  - [x] message « Annuler » qui bloquait les suppressions enchaînées dans l'éditeur de séance ;
+  - [x] progression : force / volume du même exercice dans deux séances (référence = même séance) ;
+  - [ ] onglet « Suivi » (dashboard de charges par exercice / séance) : proposition à valider ;
+  - [ ] banque d'exercices commune (FR/EN + description) : proposition à valider.
 - [ ] Implémenter, tester (`node --test tests/*.test.mjs`), republier en test.
 - [ ] Ajustements Android :
   - le conseil d'installation du premier lancement s'adapte à iOS/Android ;

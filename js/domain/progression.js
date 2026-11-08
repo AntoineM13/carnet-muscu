@@ -18,6 +18,11 @@
  *  - La suggestion est indicative : l'utilisateur saisit ce qu'il veut.
  *  - Le RPE n'influence rien (information seulement).
  *  - Le planning n'intervient pas : seule compte l'historique de l'exercice.
+ *  - Un même exercice peut être travaillé en force dans une séance et en volume
+ *    dans une autre (ex. développé décliné : Pec/Dos lourd, Dos/Pec en volume).
+ *    La référence est donc, par ordre de priorité : la dernière fois DANS LA
+ *    MÊME SÉANCE (modèle), sinon avec la même plage de reps, sinon la dernière
+ *    fois tout court. Voir `lastPerformance`.
  */
 import { exerciseHistory, isWorkSet, mainStage } from './stats.js';
 import { roundTo, fmtNum } from '../core/util.js';
@@ -28,19 +33,28 @@ export const MODES = {
   recup: { label: 'Récup / volume', short: '−' },
 };
 
+const sameRange = (a, b) => !!a && !!b && a.repMin === b.repMin && a.repMax === b.repMax;
+
 /**
- * Dernière performance d'un exercice (séance terminée la plus récente).
- * @returns {{date:string, sessionId:string, sets:object[]}|null}
+ * Dernière performance d'un exercice (séance terminée la plus récente),
+ * dans le même contexte si possible.
+ * @param {object} [opts]
+ * @param {string} [opts.templateId] séance modèle en cours : priorité à son historique
+ * @param {object} [opts.target]     plage de reps visée : à défaut, priorité à la même plage
+ * @returns {{date:string, sessionId:string, sets:object[], context:'seance'|'plage'|'autre'}|null}
  */
-export function lastPerformance(exerciseId, sessions, { excludeSessionId = null } = {}) {
+export function lastPerformance(exerciseId, sessions, { excludeSessionId = null, templateId = null, target = null } = {}) {
   const hist = exerciseHistory(exerciseId, sessions, { excludeSessionId });
   if (!hist.length) return null;
-  const last = hist[hist.length - 1];
-  const sets = last.session.items
-    .filter((it) => it.exerciseId === exerciseId)
-    .flatMap((it) => it.sets)
-    .filter(isWorkSet);
-  return { date: last.date, sessionId: last.session.id, sets };
+  const items = (h) => h.session.items.filter((it) => it.exerciseId === exerciseId);
+  const pickLast = (pred) => { for (let i = hist.length - 1; i >= 0; i--) if (pred(hist[i])) return hist[i]; return null; };
+  let context = 'autre';
+  let last = null;
+  if (templateId) { last = pickLast((h) => h.session.templateId === templateId); if (last) context = 'seance'; }
+  if (!last && target) { last = pickLast((h) => items(h).some((it) => sameRange(it.target, target))); if (last) context = 'plage'; }
+  if (!last) last = hist[hist.length - 1];
+  const sets = items(last).flatMap((it) => it.sets).filter(isWorkSet);
+  return { date: last.date, sessionId: last.session.id, sets, context };
 }
 
 /** Le mode que l'app choisirait seule. */
@@ -66,10 +80,11 @@ export function reachedTop(sets, target) {
  * @param {object} p.settings réglages (recupPct)
  * @param {object[]} p.sessions historique
  * @param {object} [p.exercise] fiche exercice (loadMode)
+ * @param {string} [p.templateId] séance modèle en cours (historique prioritaire)
  * @returns {{ mode, auto, sets:{load,reps}[], headline, reason, last } | null}
  */
-export function suggest({ exerciseId, target, mode = null, form = 'normal', settings, sessions, exercise = null, excludeSessionId = null }) {
-  const last = lastPerformance(exerciseId, sessions, { excludeSessionId });
+export function suggest({ exerciseId, target, mode = null, form = 'normal', settings, sessions, exercise = null, excludeSessionId = null, templateId = null }) {
+  const last = lastPerformance(exerciseId, sessions, { excludeSessionId, templateId, target });
   const auto = autoMode(last, target, form);
   const m = mode || auto;
   if (!last || !m) return null;
@@ -113,12 +128,12 @@ export function suggest({ exerciseId, target, mode = null, form = 'normal', sett
  * à défaut la dernière performance, à défaut vide.
  */
 export function prefillSets(exerciseId, count, sessions, opts = {}) {
-  const { exercise = null, target = null, form = 'normal', mode = null, settings = null, excludeSessionId = null } = opts;
+  const { exercise = null, target = null, form = 'normal', mode = null, settings = null, excludeSessionId = null, templateId = null } = opts;
   if (target) {
-    const sug = suggest({ exerciseId, target, mode, form, settings, sessions, exercise, excludeSessionId });
+    const sug = suggest({ exerciseId, target, mode, form, settings, sessions, exercise, excludeSessionId, templateId });
     if (sug) return sug.sets;
   }
-  const last = lastPerformance(exerciseId, sessions, { excludeSessionId });
+  const last = lastPerformance(exerciseId, sessions, { excludeSessionId, templateId, target });
   const out = [];
   for (let i = 0; i < count; i++) {
     const src = last?.sets[Math.min(i, last.sets.length - 1)];

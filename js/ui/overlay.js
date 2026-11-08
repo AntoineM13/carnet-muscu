@@ -12,6 +12,7 @@ const stack = [];
  * @returns api
  */
 export function openSheet({ title, render, onClose, className = '' }) {
+  dismissToast(); // le message précédent ne doit pas masquer les boutons de la feuille
   const backdrop = h('div.sheet-backdrop');
   const body = h('div.sheet-body');
   const titleEl = h('h2', null, title || '');
@@ -99,17 +100,35 @@ export function confirmAction({ title, message, confirmLabel = 'Supprimer', dang
 /* ---------------------------------------------------------------- Toast -- */
 let toastWrap = null;
 let toastTimer = null;
+let toastEl = null;
+
+function dismissToast() {
+  clearTimeout(toastTimer);
+  toastEl?.remove();
+  toastEl = null;
+}
 
 /**
  * Affiche un message. Avec `undo`, un bouton « Annuler » reste visible
  * quelques secondes.
+ *
+ * Le message ne bloque jamais l'écran : toucher n'importe où ailleurs le fait
+ * disparaître (et le toucher passe quand même à l'élément visé), ce qui permet
+ * d'enchaîner plusieurs suppressions sans attendre. Toucher le message le ferme.
  */
-export function toast(message, { undo = null, duration = undo ? 6000 : 2600 } = {}) {
-  if (!toastWrap) { toastWrap = h('div.toast-wrap'); document.body.append(toastWrap); }
-  clearTimeout(toastTimer);
+export function toast(message, { undo = null, duration = undo ? 5000 : 2600 } = {}) {
+  if (!toastWrap) {
+    toastWrap = h('div.toast-wrap');
+    document.body.append(toastWrap);
+    document.addEventListener('pointerdown', (e) => {
+      if (toastEl && !toastEl.contains(e.target)) dismissToast();
+    }, true);
+  }
+  dismissToast();
   const el = h('div.toast', { role: 'status' },
-    h('span.msg', null, message),
-    undo && h('button.btn.sm.primary', { onclick: () => { clearTimeout(toastTimer); el.remove(); undo(); } }, icon('undo', 'sm'), 'Annuler'));
+    h('span.msg', { onclick: () => dismissToast() }, message),
+    undo && h('button.btn.sm.primary', { onclick: () => { dismissToast(); undo(); } }, icon('undo', 'sm'), 'Annuler'));
+  toastEl = el;
   toastWrap.replaceChildren(el);
-  toastTimer = setTimeout(() => el.remove(), duration);
+  toastTimer = setTimeout(() => { if (toastEl === el) dismissToast(); }, duration);
 }

@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS = {
   // Saisie
   rpeEnabled: false,          // RPE optionnel, désactivé par défaut
   swipeEnabled: true,         // balayage horizontal entre exercices
+  restTimerEnabled: true,     // chrono de repos après chaque série (désactivable)
   soundEnabled: true,         // bip discret en fin de repos
   // Valeurs par défaut d'un nouvel exercice dans le programme
   defaultSets: 3,

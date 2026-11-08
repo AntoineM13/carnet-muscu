@@ -84,7 +84,7 @@ function header(ctx) {
 
 /* ------------------------------------------------------ Chrono repos -- */
 function restBar(session) {
-  if (!session.rest) return null;
+  if (!session.rest || !state.settings.restTimerEnabled) return null;
   const left = Math.ceil((session.rest.endsAt - Date.now()) / 1000);
   const adjust = (d) => { Ses.adjustRest(session, d); persistSession(session); rerender(); };
   return h(`div.rest-bar${left <= 0 ? '.over' : ''}`, { 'data-ends': session.rest.endsAt, 'data-dur': session.rest.durationSec },
@@ -156,7 +156,7 @@ function stepView(ctx) {
 function exerciseHead(ctx, item, k) {
   const { step, session } = ctx;
   const ex = getExercise(item.exerciseId);
-  const last = lastPerformance(item.exerciseId, state.sessions, { excludeSessionId: session.id });
+  const last = lastPerformance(item.exerciseId, state.sessions, { excludeSessionId: session.id, templateId: session.templateId, target: item.target });
   const t = item.target;
   const letter = Ses.laneLetter(step, item);
   if (item.replacedBy) {
@@ -262,7 +262,7 @@ function currentSetCard(ctx, e) {
     primeAudio();
     const rest = Ses.validateSet(session, set.id, { supersetRestAfterRound: state.settings.supersetRestAfterRound });
     propagateLoad(item, set);
-    if (!ctx.editMode && rest) Ses.startRest(session, set.id, rest);
+    if (!ctx.editMode && rest && state.settings.restTimerEnabled) Ses.startRest(session, set.id, rest);
     haptic(20);
     ctx.save();
     // Amène la série suivante à l'écran (sans masquer par l'en-tête ni le pied de page).
@@ -309,7 +309,7 @@ function copyLast(ctx, item, set) {
   const prevDone = [...item.sets.slice(0, item.sets.indexOf(set))].reverse().find((s) => s.done && s.type === set.type);
   let src = prevDone?.stages[0];
   if (!src) {
-    const last = lastPerformance(item.exerciseId, state.sessions, { excludeSessionId: ctx.session.id });
+    const last = lastPerformance(item.exerciseId, state.sessions, { excludeSessionId: ctx.session.id, templateId: ctx.session.templateId, target: item.target });
     const ls = last?.sets[Math.min(Math.max(pos, 0), (last?.sets.length || 1) - 1)];
     src = ls?.stages[0];
   }
@@ -361,7 +361,7 @@ function openSetSheet(ctx, itemId, setId) {
             : h('button.btn.primary.block', {
               onclick: () => {
                 const rest = Ses.validateSet(session, set.id, { supersetRestAfterRound: state.settings.supersetRestAfterRound });
-                if (!ctx.editMode && rest) Ses.startRest(session, set.id, rest);
+                if (!ctx.editMode && rest && state.settings.restTimerEnabled) Ses.startRest(session, set.id, rest);
                 upd(); api.close();
               },
             }, icon('check', 'sm'), 'Valider'),

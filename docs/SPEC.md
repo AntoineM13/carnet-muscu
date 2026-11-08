@@ -76,6 +76,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - En cours de séance, on peut réordonner, sauter ou reprendre, ajouter, retirer, grouper ou dégrouper en superset, ajouter ou supprimer des séries, et changer la date.
 - **Remplacer un exercice** : « Juste aujourd'hui » ou « Définitivement ». Si des séries sont déjà validées, elles restent attachées à l'exercice d'origine, et le remplaçant prend la suite sur le même écran, dans le même « couloir » du superset.
 - **Superset** : les séries s'alternent (A1, B1, A2…) et le repos se lance après le tour complet (réglable).
+- Les messages « Annuler » ne bloquent jamais l'écran : toucher ailleurs ou ouvrir une feuille les ferme.
 - Tout reste modifiable jusqu'à la fin de la séance. Après coup, on corrige depuis l'historique, avec un marquage « modifiée après coup ».
 - La séance reprend automatiquement si on quitte l'app.
 - Résumé de fin : durée, volume, records battus, et une note de séance (sommeil, fatigue, douleur, humeur de 1 à 5, plus un texte libre).
@@ -86,7 +87,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - **Dégressives** : plusieurs paliers dans la même série. La charge proposée pour chaque palier (−20 % par défaut) n'est qu'une proposition, toujours modifiable à la main. Le chrono démarre après le dernier palier. Le volume compte tous les paliers ; les records et la progression ne comptent que le premier.
 - **Échauffement** : proposé sur le premier exercice (à 50, 70 et 85 % de la charge de travail), et disponible à la demande sur les autres.
 - Calculateur de disques pour les exercices à la barre (poids de la barre et disques disponibles réglables).
-- Chrono de repos : −15 s, +15 s, Passer, alerte visuelle et bip en fin de repos. La vibration n'est pas supportée sur iOS.
+- Chrono de repos : −15 s, +15 s, Passer, alerte visuelle et bip en fin de repos. La vibration n'est pas supportée sur iOS. **Désactivable** (Réglages → Saisie → Chrono de repos) pour ceux qui utilisent leur propre chrono ; le réglage suit le compte.
 - Bouton « Comme la dernière fois ». Les séries suivantes reprennent la charge réellement validée.
 
 ### Progression (tout est dans `js/domain/progression.js`)
@@ -95,6 +96,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - **Récup / volume** : charge −10 % (réglable), reps au haut de la plage et une série de plus.
 - « Forme du jour » (Frais / Normal / KO) en début de séance. **KO** bascule tout en Récup. Le mode reste modifiable exercice par exercice.
 - Les suggestions préremplissent les séries et restent indicatives. Les échauffements et les paliers de dégressive sont ignorés.
+- **Référence = même contexte** : un exercice peut être fait en force dans une séance et en volume dans une autre (ex. développé décliné barre). La suggestion se base sur la dernière fois dans la **même séance modèle**, sinon avec la **même plage de reps**, sinon la dernière fois tout court.
 
 ### Objectifs et stats
 - Records : charge max, meilleur 1RM estimé (Epley), meilleur volume.
@@ -136,3 +138,4 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-11-08 : synchro plus réactive (retour d'Antoine : il fallait appuyer sur « Synchroniser ») : vérification toutes les 15 s au lieu de 60 s, et à chaque retour dans la fenêtre. Requêtes sans cache navigateur.
 - 2026-11-08 : « Confirm email » reste désactivé en production : l'e-mail intégré de Supabase (gratuit) est limité à 2 envois/heure et ne livre qu'aux membres de l'équipe Supabase, les amis ne pourraient pas confirmer. Mot de passe oublié : suppression du compte, puis recréation.
 - 2026-11-08 : étape 1 validée par Antoine sur iPhone et Mac : synchro automatique dans les deux sens sur l'environnement de test.
+- 2026-11-08 : retours salle (1) : chrono de repos désactivable ; le message « Annuler » ne masque plus la feuille suivante (suppressions enchaînées) ; suggestion de charge basée sur la même séance (force et volume du même exercice ne se mélangent plus).

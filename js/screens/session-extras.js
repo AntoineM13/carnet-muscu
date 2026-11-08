@@ -21,7 +21,7 @@ export const FORMS = [
 export function itemSuggestion(session, item, modeOverride = item.mode) {
   return suggest({
     exerciseId: item.exerciseId, target: item.target, mode: modeOverride, form: session.form,
-    settings: state.settings, sessions: state.sessions, exercise: getExercise(item.exerciseId), excludeSessionId: session.id,
+    settings: state.settings, sessions: state.sessions, exercise: getExercise(item.exerciseId), excludeSessionId: session.id, templateId: session.templateId,
   });
 }
 

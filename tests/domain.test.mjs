@@ -166,7 +166,7 @@ test('outils : échauffement, disques, dégressive', () => {
 });
 
 /* ------------------------------------------------ Étape 2 : progression -- */
-import { suggest, autoMode } from '../js/domain/progression.js';
+import { suggest, autoMode, lastPerformance } from '../js/domain/progression.js';
 import { goalProgress } from '../js/domain/goals.js';
 
 function doneSession(date, exerciseId, sets, extra = []) {
@@ -231,4 +231,41 @@ test('course : allure et durée', () => {
   assert.equal(parseDuration('1:02:30'), 3750);
   assert.equal(fmtPace(paceSec({ distanceKm: 5, durationSec: 1710 })), '5:42 /km');
   assert.equal(planWeekIndex(RUN_PLANS[0], '2026-09-21', '2026-10-06'), 2);
+});
+
+/* --- Même exercice en force et en volume dans deux séances différentes --- */
+function ctxSession(date, templateId, target, sets) {
+  const s = doneSession(date, 'ex-a', sets);
+  s.id = `s-${date}-${templateId}`; s.templateId = templateId; s.items[0].target = target;
+  return s;
+}
+const FORCE = { sets: 3, repMin: 4, repMax: 6, restSec: 180, increment: 2.5 };
+const VOLUME = { sets: 3, repMin: 10, repMax: 12, restSec: 90, increment: 2.5 };
+
+test('progression : la séance force se base sur la dernière séance force, pas sur le volume', () => {
+  const s = [
+    ctxSession('2026-10-01', 't-force', FORCE, [[80, 5], [80, 5], [80, 4]]),
+    ctxSession('2026-10-03', 't-volume', VOLUME, [[60, 12], [60, 12], [60, 12]]),
+  ];
+  const force = suggest({ exerciseId: 'ex-a', target: FORCE, sessions: s, settings: DEFAULT_SETTINGS, templateId: 't-force' });
+  assert.equal(force.mode, 'stabiliser');
+  assert.equal(force.sets[0].load, 80);
+  assert.equal(force.last.context, 'seance');
+  const volume = suggest({ exerciseId: 'ex-a', target: VOLUME, sessions: s, settings: DEFAULT_SETTINGS, templateId: 't-volume' });
+  assert.equal(volume.mode, 'augmenter');
+  assert.equal(volume.sets[0].load, 62.5);
+});
+
+test('progression : à défaut de la même séance, même plage de reps, sinon la dernière fois', () => {
+  const s = [
+    ctxSession('2026-10-01', 't-force', FORCE, [[80, 6], [80, 6], [80, 6]]),
+    ctxSession('2026-10-03', 't-volume', VOLUME, [[60, 11], [60, 10], [60, 10]]),
+  ];
+  const libre = suggest({ exerciseId: 'ex-a', target: FORCE, sessions: s, settings: DEFAULT_SETTINGS, templateId: 't-autre' });
+  assert.equal(libre.last.context, 'plage');
+  assert.deepEqual(libre.sets[0], { load: 82.5, reps: 4 });
+  const T2 = { sets: 3, repMin: 6, repMax: 8, restSec: 90, increment: 2.5 };
+  const autre = lastPerformance('ex-a', s, { templateId: 't-autre', target: T2 });
+  assert.equal(autre.context, 'autre');
+  assert.equal(autre.date, '2026-10-03');
 });
