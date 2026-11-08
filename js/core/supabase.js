@@ -41,6 +41,7 @@ export function createSupabaseClient({ url, key, loadSession, saveSession, fetch
     try {
       res = await fetchFn(`${base}${path}`, {
         method,
+        cache: 'no-store', // jamais de réponse périmée venant du cache du navigateur
         headers: {
           apikey: key,
           ...(auth && session ? { Authorization: `Bearer ${session.access_token}` } : {}),

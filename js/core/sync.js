@@ -6,7 +6,7 @@
  *  - sans compte connecté, rien ne change : l'app reste 100 % locale ;
  *  - une fois connecté, chaque modification locale est envoyée quelques
  *    secondes plus tard, et les changements faits sur un autre appareil
- *    sont récupérés à l'ouverture, au retour du réseau et toutes les minutes.
+ *    sont récupérés à l'ouverture, au retour dans l'app, au retour du réseau et toutes les 15 s.
  */
 import { db } from './db.js';
 import { setChangeHook, getLocalDoc, listLocalKeys, applyRemoteDoc, notify, saveMeta, state } from './store.js';
@@ -70,7 +70,10 @@ export async function initSync() {
     engine.markDirty(collection, id);
     schedule();
   });
+  // Retour du réseau, retour dans l'app (téléphone) ou dans la fenêtre (ordinateur).
   window.addEventListener('online', () => syncNow());
+  window.addEventListener('focus', () => syncNow());
+  window.addEventListener('pageshow', () => syncNow());
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(); });
   if (user) {
     setStatus({ user, state: 'idle', lastSync: await kvGet('lastSync'), pending: engine.pendingCount() });
@@ -107,6 +110,8 @@ export async function syncNow() {
     const lastSync = new Date().toISOString();
     kvPut('lastSync', lastSync).catch(() => {});
     setStatus({ state: 'idle', lastSync, pending: engine.pendingCount() });
+    // Modifications faites pendant l'envoi : on les envoie juste après.
+    if (engine.pendingCount()) schedule();
     if (res?.applied) refreshUi();
     return res;
   } catch (e) {

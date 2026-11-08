@@ -13,6 +13,7 @@ export const SYNC_CONFIG = {
   publishableKey: 'sb_publishable_oLjoDLkfBV-bTxruxEmx6g_ERpF3LCS',
   // Délai avant d'envoyer une modification (regroupe les saisies rapides).
   debounceMs: 3000,
-  // Synchronisation périodique tant que l'app est ouverte.
-  intervalMs: 60000,
+  // Synchronisation périodique tant que l'app est ouverte et visible
+  // (récupère les modifications faites sur un autre appareil).
+  intervalMs: 15000,
 };

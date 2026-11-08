@@ -22,7 +22,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - Environnement de test : dépôt `antoinem13/carnet-muscu-test` (GitHub Pages), pour tester sur téléphone sans toucher la production. Même domaine que la production, donc isolation explicite (`js/core/env.js`) : base IndexedDB `carnet-muscu-test`, préfixe de cache `cm-test-`, repère « TEST » à l'écran.
 
 ## 2b. Synchronisation en ligne (Supabase)
-- **Local d'abord** : IndexedDB reste la source de vérité de l'appareil. L'app marche sans réseau ; la synchro se fait en arrière-plan (au démarrage, 3 s après une modification, au retour du réseau, toutes les 60 s).
+- **Local d'abord** : IndexedDB reste la source de vérité de l'appareil. L'app marche sans réseau ; la synchro se fait en arrière-plan (au démarrage, 3 s après une modification, au retour du réseau ou dans l'app, toutes les 15 s tant que l'app est visible).
 - Projet Supabase gratuit `carnet-muscu`, région Europe. URL et clé **publishable** dans `js/data/sync-config.js` (clé publique par conception). **Jamais de clé `secret` / `service_role` ni de mot de passe de base dans le dépôt.**
 - Une seule table `public.docs` (schéma : `docs/supabase-schema.sql`) : `(user_id, collection, id)` → `data` JSON, `deleted`, `updated_at` (fixé par le serveur). RLS : chacun ne voit que ses lignes.
 - Collections synchronisées : exercises, templates, sessions, goals, runs, et `kv` (settings, schedule). `meta` (onboarding, séance active) reste propre à l'appareil.
@@ -133,3 +133,4 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-11-08 : règle de publication : **rien n'est publié sur `master` tant que ce n'est pas stable et validé par Antoine**. Avant chaque publication qui touche aux données, les 3 utilisateurs font un export de sauvegarde.
 - 2026-11-08 : la version de test utilise sa propre base locale et son propre cache, car elle partage le domaine `antoinem13.github.io` avec la production : sinon elle aurait modifié les vraies données du téléphone.
 - 2026-11-08 : environnement de test en ligne : dépôt `antoinem13/carnet-muscu-test`, GitHub Pages sur `main` (= branche `sync-supabase`), remote Git local `test`.
+- 2026-11-08 : synchro plus réactive (retour d'Antoine : il fallait appuyer sur « Synchroniser ») : vérification toutes les 15 s au lieu de 60 s, et à chaque retour dans la fenêtre. Requêtes sans cache navigateur.
