@@ -134,3 +134,4 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-11-08 : la version de test utilise sa propre base locale et son propre cache, car elle partage le domaine `antoinem13.github.io` avec la production : sinon elle aurait modifié les vraies données du téléphone.
 - 2026-11-08 : environnement de test en ligne : dépôt `antoinem13/carnet-muscu-test`, GitHub Pages sur `main` (= branche `sync-supabase`), remote Git local `test`.
 - 2026-11-08 : synchro plus réactive (retour d'Antoine : il fallait appuyer sur « Synchroniser ») : vérification toutes les 15 s au lieu de 60 s, et à chaque retour dans la fenêtre. Requêtes sans cache navigateur.
+- 2026-11-08 : « Confirm email » reste désactivé en production : l'e-mail intégré de Supabase (gratuit) est limité à 2 envois/heure et ne livre qu'aux membres de l'équipe Supabase, les amis ne pourraient pas confirmer. Mot de passe oublié : suppression du compte, puis recréation.

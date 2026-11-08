@@ -52,12 +52,12 @@ Uniquement après le feu vert explicite d'Antoine.
 
 - [ ] Supabase (Antoine, guidé) :
   - supprimer les **comptes de test** (Authentication → Users → supprimer ; leurs données partent avec, grâce au `on delete cascade`). Y compris le compte avec l'e-mail réel d'Antoine utilisé pendant les tests sur localhost, pour repartir propre ;
-  - réactiver **Confirm email** (Authentication → Sign In / Providers → Email) ;
+  - **laisser Confirm email DÉSACTIVÉ** (Authentication → Sign In / Providers → Email). Le service d'e-mails intégré de Supabase n'envoie que 2 e-mails/heure et **uniquement aux membres de l'équipe Supabase** (Antoine) : avec la confirmation activée, les amis ne recevraient jamais le lien et ne pourraient pas finir leur inscription. Sans confirmation, l'inscription n'envoie aucun e-mail (limite anti-abus : ~30 inscriptions / 5 min / IP). Mot de passe oublié : supprimer le compte dans Supabase, la personne en recrée un (ses données locales repartent en ligne). Si un jour les e-mails deviennent nécessaires : brancher un SMTP gratuit (ex. Resend), Authentication → Emails → SMTP Settings ;
   - **Site URL** = `https://antoinem13.github.io/carnet-muscu/` et ajouter cette adresse aux Redirect URLs ;
-  - vérifier que le lien de confirmation reçu par e-mail renvoie bien vers l'app, et que l'app gère proprement l'adresse de retour (fragment `#access_token=…` dans l'URL : il ne doit pas casser le routeur ; l'utilisateur se connecte ensuite normalement).
+  - (seulement si un SMTP est branché et la confirmation réactivée) vérifier que le lien de confirmation reçu par e-mail renvoie bien vers l'app, et que le fragment `#access_token=…` dans l'URL ne casse pas le routeur.
 - [ ] Rédiger le message pour les amis (court, en français) :
   1. **Avant la mise à jour** : Réglages → Exporter la sauvegarde complète → Enregistrer dans Fichiers.
-  2. Après la mise à jour (fermer complètement l'app et la rouvrir) : Réglages → Compte et synchronisation → Créer un compte → confirmer l'e-mail → se connecter. Leur historique local est envoyé automatiquement.
+  2. Après la mise à jour (fermer complètement l'app et la rouvrir) : Réglages → Compte et synchronisation → Créer un compte (aucun e-mail de confirmation). Leur historique local est envoyé automatiquement.
 - [ ] Attendre qu'Antoine confirme que les amis ont fait leur sauvegarde.
 - [ ] Fusionner `sync-supabase` dans `master` : incrémenter `VERSION` dans `sw.js` (version propre, ex. `v1.3.0`), tests au vert, `node tools/check-sw.mjs`, mettre à jour `README.md`, `docs/DEPLOIEMENT.md` et `docs/SPEC.md`. Publier.
 - [ ] Vérifier la production en ligne, puis supprimer le dépôt de test (`gh repo delete` ou guider Antoine) et retirer son adresse des Redirect URLs.
