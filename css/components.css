@@ -251,3 +251,12 @@ input[type='date'].input { display: flex; align-items: center; }
 .chart-legend .sw { display: inline-block; width: 18px; height: 0; border-top: 2px solid var(--accent); }
 .chart-legend .sw.s1 { border-top: 2px dashed var(--text-2); }
 .chart-legend .sw.s2 { border-top: 2px dotted var(--text-3); }
+
+/* Choix des muscles : groupes, puis parties seulement pour un groupe choisi. */
+.chip.sm { min-height: 32px; padding: 0 11px; font-size: 13px; }
+.chip.muted { color: var(--text-3); }
+.muscle-groups { display: flex; flex-wrap: wrap; gap: 8px; }
+.muscle-group { display: contents; }
+.muscle-group.open { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; padding: 8px; margin: 2px 0; border-radius: 16px; background: var(--surface-2); }
+.muscle-group.open > .chip { background: var(--accent-soft); }
+.muscle-parts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }

@@ -3,6 +3,7 @@
  * Les réglages de l'utilisateur sont fusionnés par-dessus ces valeurs
  * (une nouvelle clé ajoutée ici sera donc disponible sans migration).
  */
+import { MUSCLE_TREE } from './muscles.js';
 
 export const DEFAULT_SETTINGS = {
   // Saisie
@@ -47,10 +48,8 @@ export const DEFAULT_SETTINGS = {
   exportReminderDays: 7,
 };
 
-export const MUSCLE_GROUPS = [
-  'Pectoraux', 'Dos', 'Épaules', 'Biceps', 'Triceps', 'Avant-bras',
-  'Quadriceps', 'Ischio-jambiers', 'Fessiers', 'Mollets', 'Abdominaux', 'Autre',
-];
+/** Groupes musculaires (libellés), dans l'ordre d'affichage : voir js/data/muscles.js. */
+export const MUSCLE_GROUPS = MUSCLE_TREE.map((g) => g.label);
 
 export const EQUIPMENTS = [
   { value: 'barre', label: 'Barre' },

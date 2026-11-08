@@ -10,9 +10,12 @@ import { newExercise, effectiveIncrement } from '../domain/program.js';
 import { exerciseHistory, formatSets } from '../domain/stats.js';
 import { saveExercise, removeExercise, mergeExerciseInto } from '../core/actions.js';
 import { icon } from '../ui/icons.js';
-import { topbar, field, selectInput, switchRow, textarea, emptyState, stepper } from '../ui/components.js';
+import { topbar, field, selectInput, switchRow, textarea, emptyState, stepper, segmented } from '../ui/components.js';
 import { go, rerender } from '../core/router.js';
 import { confirmAction, toast } from '../ui/overlay.js';
+import { editMuscles } from '../ui/muscle-picker.js';
+import { musclesSummary } from '../domain/muscles.js';
+import { MECHANICS } from '../data/muscles.js';
 import { pickExercise } from '../ui/pickers.js';
 import { exerciseProgressSection } from './exercise-progress.js';
 
@@ -74,8 +77,10 @@ export function renderExercise({ id, new: isNew }) {
     h('div.stack', null,
       field('Nom affiché', h('input.input', { type: 'text', value: e.name, autofocus: isNew ? true : null, onchange: (ev) => upd({ name: ev.target.value.trim() || e.name }, true) })),
       field('Nom standardisé', h('input.input', { type: 'text', value: e.standard || '', placeholder: 'Optionnel', onchange: (ev) => upd({ standard: ev.target.value.trim() }) })),
+      field('Muscles travaillés', h('button.option', { onclick: () => editMuscles(e, () => { saveExercise(e, { silent: true }); rerender(); }) },
+        h('div.grow', null, h('div.t', null, musclesSummary(e)), h('div.d', null, e.muscles?.primary?.length ? 'Toucher pour modifier' : 'Toucher pour préciser (principal, secondaires)')), icon('chevron', 'sm'))),
+      field('Type de mouvement', segmented([...MECHANICS.map((m) => ({ value: m.value, label: m.label })), { value: null, label: 'Non précisé' }], e.mechanic ?? null, (v) => upd({ mechanic: v }, true))),
       h('div.field-row', null,
-        field('Groupe musculaire', selectInput(MUSCLE_GROUPS.map((g) => ({ value: g, label: g })), e.muscleGroup, (v) => upd({ muscleGroup: v }))),
         field('Matériel', selectInput(EQUIPMENTS.map((q) => ({ ...q, label: q.label.replace(' (charge par haltère)', '') })), e.equipment, (v) => upd({ equipment: v, loadMode: v === 'pdc' ? 'lest' : e.loadMode }, true)))),
       incrementField(e, upd),
       h('div.list', null,

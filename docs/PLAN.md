@@ -34,7 +34,11 @@ Antoine a des retours d'usage à transmettre. Les traiter **sur la branche `sync
   - [x] progression : force / volume du même exercice dans deux séances (référence = même séance) ;
   - [x] onglet « Progrès » (remplace Objectifs) : résumé de la semaine, tableau par séance, courbes par séance ;
   - [x] lot 2 (analyse de l'export) : incréments par matériel (réglables) et par exercice, poids de corps, détection des dégressives, repos > 15 min ignoré, fusion de doublons, fond sous la Dynamic Island ;
+  - [x] muscles sur deux niveaux (groupes + parties, principal / secondaires) et type de mouvement (poly / isolation) ;
   - [ ] banque d'exercices commune : banque intégrée FR/EN + description (~150-200 exercices), plus ajouts partagés via une table Supabase commune (`bank`, lecture par tous les connectés, écriture par l'auteur).
+  - [ ] recherche par filtres (muscle, type de mouvement, matériel) sans listes indigestes : « Mes exercices » d'abord, la banque en second ;
+  - [ ] signalement des exercices proches (à la création + badge « Doublon possible ? » dans la bibliothèque, avec « Ce sont deux exercices différents ») ;
+  - [ ] silhouette 2D cliquable face / dos (à tenter ; abandon possible si le rendu n'est pas bon).
 - [ ] Implémenter, tester (`node --test tests/*.test.mjs`), republier en test.
 - [ ] Ajustements Android :
   - le conseil d'installation du premier lancement s'adapte à iOS/Android ;
