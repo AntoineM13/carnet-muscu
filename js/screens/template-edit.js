@@ -86,7 +86,7 @@ function slotRow(t, b, bi, s, si, mutate) {
     h('div.grow', null,
       h('div.title', null, ex?.name || 'Exercice supprimé',
         ex?.pain?.active ? h('span.badge.warn', { style: { marginLeft: '8px' } }, icon('alert', 'sm'), 'Douleur') : null),
-      h('div.sub.num', null, `${s.sets} × ${s.repMin}-${s.repMax} · repos ${s.restSec} s · +${fmtNum(s.increment)} kg`),
+      h('div.sub.num', null, `${s.sets} × ${s.repMin}-${s.repMax} · repos ${s.restSec} s · +${fmtNum(Prog.effectiveIncrement(getExercise(s.exerciseId), state.settings))} kg`),
       s.alternatives?.length ? h('div.sub', null, 'ou ', s.alternatives.map(exerciseName).join(' · ')) : null),
     h('span.chev', null, icon('chevron', 'sm')));
 }
@@ -111,8 +111,8 @@ function openSlotSheet(t, slotId, mutate) {
           stepper({ label: 'Séries', value: s.sets, step: 1, min: 1, max: 12, onChange: (v) => upd(() => { s.sets = v ?? 1; }) }),
           stepper({ label: 'Repos (s)', value: s.restSec, step: 15, min: 0, max: 600, onChange: (v) => upd(() => { s.restSec = v ?? 0; }) }),
           stepper({ label: 'Reps min', value: s.repMin, step: 1, min: 1, max: 100, onChange: (v) => upd(() => { s.repMin = v ?? 1; if (s.repMax < s.repMin) s.repMax = s.repMin; }) }),
-          stepper({ label: 'Reps max', value: s.repMax, step: 1, min: 1, max: 100, onChange: (v) => upd(() => { s.repMax = Math.max(v ?? 1, s.repMin); }) }),
-          stepper({ label: 'Incrément (kg)', value: s.increment, step: 0.5, min: 0, max: 20, onChange: (v) => upd(() => { s.increment = v ?? 0; }) })),
+          stepper({ label: 'Reps max', value: s.repMax, step: 1, min: 1, max: 100, onChange: (v) => upd(() => { s.repMax = Math.max(v ?? 1, s.repMin); }) })),
+        h('p.tiny.faint', { style: { marginTop: '8px' } }, `Augmentation proposée : +${fmtNum(Prog.effectiveIncrement(getExercise(s.exerciseId), state.settings))} kg (selon le matériel, modifiable dans la fiche de l’exercice ou les Réglages).`),
         h('div.eyebrow', { style: { margin: '20px 0 8px' } }, 'Alternatives'),
         h('p.small.muted', { style: { marginBottom: '10px' } }, 'Proposées au moment de la séance (ex. bûcheron / rowing banc).'),
         h('div.chips', null,

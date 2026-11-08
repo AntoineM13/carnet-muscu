@@ -50,7 +50,9 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - Éditeur intégré : séances, exercices, blocs.
 - **Superset** : un bloc regroupant plusieurs exercices.
 - **Alternatives** : un emplacement peut proposer plusieurs exercices (ex. bûcheron / rowing banc) ; on choisit en séance, et l'app retient le dernier choix.
-- Réglages par emplacement : séries, plage de reps, repos, incrément.
+- Réglages par emplacement : séries, plage de reps, repos.
+- **Incrément** (de combien monte la charge proposée) : défini par le **matériel** dans Réglages → « Charges de ta salle » (défauts : barre 2,5 kg, haltères 2 kg, machine 5 kg, poulie 5 kg, lest 2,5 kg), et modifiable **par exercice** dans sa fiche. L'ancien incrément stocké dans chaque emplacement n'est plus utilisé (gardé dans les données pour compatibilité).
+- **Fusionner deux exercices** (fiche exercice → « Fusionner avec un autre exercice… ») : pour les doublons ; historique, programme, objectifs et notes passent sur l'exercice gardé, avec « Annuler ».
 - Bibliothèque personnalisable. L'historique est rattaché à l'**id** de l'exercice, donc le renommer ne casse rien.
 - Chaque exercice a des notes permanentes et un marqueur « douleur / à éviter » avec commentaire.
 
@@ -82,9 +84,10 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - Résumé de fin : durée, volume, records battus, et une note de séance (sommeil, fatigue, douleur, humeur de 1 à 5, plus un texte libre).
 
 ### Saisie
-- Champs : charge, reps, repos pris (enregistré automatiquement et modifiable), RPE (optionnel, désactivé par défaut, purement informatif) et note.
+- Champs : charge, reps, repos pris (enregistré automatiquement si le chrono est actif, ignoré au-delà de 15 min, modifiable), RPE (optionnel, désactivé par défaut, purement informatif) et note.
 - Types de série : échauffement, normale, dégressive, échec. Les échauffements sont exclus du volume.
 - **Dégressives** : plusieurs paliers dans la même série. La charge proposée pour chaque palier (−20 % par défaut) n'est qu'une proposition, toujours modifiable à la main. Le chrono démarre après le dernier palier. Le volume compte tous les paliers ; les records et la progression ne comptent que le premier.
+  Si une série est validée moins de 20 s après la précédente avec une charge au moins 15 % plus basse, l'app propose « C'était une dégressive ? → Regrouper ».
 - **Échauffement** : proposé sur le premier exercice (à 50, 70 et 85 % de la charge de travail), et disponible à la demande sur les autres.
 - Calculateur de disques pour les exercices à la barre (poids de la barre et disques disponibles réglables).
 - Chrono de repos : −15 s, +15 s, Passer, alerte visuelle et bip en fin de repos. La vibration n'est pas supportée sur iOS. **Désactivable** (Réglages → Saisie → Chrono de repos) pour ceux qui utilisent leur propre chrono ; le réglage suit le compte.
@@ -115,6 +118,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - Plans-types indicatifs et modifiables : débutant (marche / course) et intermédiaire (facile + qualité).
 
 ## 5. Conventions de saisie (décisions d'Antoine)
+- Poids de corps (Réglages, optionnel) : ajouté à la charge des exercices « poids du corps + lest » dans l'onglet Progrès (volume, 1RM, courbes). Sans lui, la tendance de ces exercices se fait sur les reps.
 - Haltères : la charge est saisie **par haltère**.
 - Tractions et dips : **lest additionnel** (0 = poids du corps, négatif = assistance).
 - Unilatéral : **une seule saisie, reps par côté**.
@@ -149,3 +153,4 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-11-08 : banque d'exercices : choix « intégrée + ajouts partagés » (banque FR/EN rédigée dans l'app, plus une table Supabase commune pour les ajouts des 3 utilisateurs).
 - 2026-11-08 : message « Annuler » déplacé en haut de l'écran (retour d'Antoine : il survolait le bas) ; repère TEST intégré à l'en-tête (la pastille fixe rendait l'en-tête flou).
 - 2026-11-08 : correction de la mise à jour bloquée (retour d'Antoine : l'app restait sur l'ancienne version). Cause : `addAll` servait les fichiers depuis la mémoire HTTP du navigateur (GitHub Pages : max-age=600) ; reproduit puis corrigé (`cache: 'reload'`, rechargement automatique à l'ouverture). Le bug existe aussi en production : il sera corrigé par la mise en production.
+- 2026-11-08 : analyse de l'export d'Antoine (7 séances) → incréments par matériel et par exercice, poids de corps pour tractions/dips, détection des dégressives saisies à part, repos > 15 min ignoré, fusion d'exercices, fond opaque sous la Dynamic Island. Les plages de reps de son programme (tout en 3 × 8-12 par défaut) sont à ajuster par Antoine dans l'app.

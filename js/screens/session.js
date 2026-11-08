@@ -265,6 +265,13 @@ function currentSetCard(ctx, e) {
     if (!ctx.editMode && rest && state.settings.restTimerEnabled) Ses.startRest(session, set.id, rest);
     haptic(20);
     ctx.save();
+    // Palier de dégressive saisi comme une série à part ? On propose de regrouper.
+    const prev = Ses.dropCandidate(session, set.id);
+    if (prev) {
+      toast('C’était une dégressive ?', {
+        action: { label: 'Regrouper', icon: 'drop', run: () => { if (Ses.mergeIntoDrop(session, prev.id, set.id)) { ctx.save(); toast('Regroupée en dégressive'); } } },
+      });
+    }
     // Amène la série suivante à l'écran (sans masquer par l'en-tête ni le pied de page).
     requestAnimationFrame(() => document.querySelector('.set-current, .step-done')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
   };
@@ -583,7 +590,7 @@ async function addExercise(ctx) {
   const id = await pickExercise({ title: 'Ajouter un exercice' });
   if (!id) return;
   const settings = state.settings;
-  const item = Ses.newItem({ exerciseId: id, target: Ses.targetFrom(null, settings), ctx: sessionCtx(session) });
+  const item = Ses.newItem({ exerciseId: id, target: Ses.targetFrom(null, settings, getExercise(id)), ctx: sessionCtx(session) });
   const at = Ses.addItemAfter(session, item, session.items.length ? session.currentStep : -1);
   session.currentStep = at;
   persistSession(session);

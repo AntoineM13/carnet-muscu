@@ -8,6 +8,7 @@ import {
 import { clone, todayISO } from './util.js';
 import { SEED_EXERCISES, SEED_TEMPLATES, SEED_DEFAULT_SCHEDULE } from '../data/seed-program.js';
 import { normalizeExercise, templateExerciseIds } from '../domain/program.js';
+import * as Prog from '../domain/program.js';
 import * as Plan from '../domain/planning.js';
 import * as Ses from '../domain/session.js';
 import { toast } from '../ui/overlay.js';
@@ -121,6 +122,32 @@ export function deleteTemplate(t) {
 export function saveExercise(e, opts) { saveDoc('exercises', e, opts); }
 
 /** Un exercice utilisé (programme ou historique) est archivé plutôt que supprimé. */
+/**
+ * Fusionne l'exercice `from` dans `to` (historique, programme, objectifs),
+ * puis supprime `from`. Retourne une fonction d'annulation.
+ */
+export function mergeExerciseInto(from, to) {
+  const before = {
+    sessions: clone(state.sessions), templates: clone(state.templates), goals: clone(state.goals), to: clone(to), from: clone(from),
+  };
+  const res = Prog.mergeExercises({ sessions: state.sessions, templates: state.templates, goals: state.goals, from, to });
+  for (const s of res.sessions) saveDoc('sessions', s, { silent: true });
+  for (const t of res.templates) saveDoc('templates', t, { silent: true });
+  for (const g of res.goals) saveDoc('goals', g, { silent: true });
+  saveDoc('exercises', res.target, { silent: true });
+  deleteDoc('exercises', from.id);
+  const undo = () => {
+    const ids = (list) => new Set(list.map((d) => d.id));
+    const s = ids(res.sessions); const t = ids(res.templates); const g = ids(res.goals);
+    for (const d of before.sessions) if (s.has(d.id)) saveDoc('sessions', d, { silent: true });
+    for (const d of before.templates) if (t.has(d.id)) saveDoc('templates', d, { silent: true });
+    for (const d of before.goals) if (g.has(d.id)) saveDoc('goals', d, { silent: true });
+    saveDoc('exercises', before.to, { silent: true });
+    saveDoc('exercises', before.from);
+  };
+  return { historyCount: res.historyCount, undo };
+}
+
 export function removeExercise(e) {
   const used = state.templates.some((t) => templateExerciseIds(t).includes(e.id))
     || state.sessions.some((s) => s.items.some((it) => it.exerciseId === e.id));

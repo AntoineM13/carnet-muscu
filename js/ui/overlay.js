@@ -116,7 +116,7 @@ export function dismissToast() {
  * disparaître (et le toucher passe quand même à l'élément visé), ce qui permet
  * d'enchaîner plusieurs suppressions sans attendre. Toucher le message le ferme.
  */
-export function toast(message, { undo = null, duration = undo ? 5000 : 2600 } = {}) {
+export function toast(message, { undo = null, action = null, duration = undo || action ? 6000 : 2600 } = {}) {
   if (!toastWrap) {
     toastWrap = h('div.toast-wrap');
     document.body.append(toastWrap);
@@ -127,7 +127,8 @@ export function toast(message, { undo = null, duration = undo ? 5000 : 2600 } = 
   dismissToast();
   const el = h('div.toast', { role: 'status' },
     h('span.msg', { onclick: () => dismissToast() }, message),
-    undo && h('button.btn.sm.primary', { onclick: () => { dismissToast(); undo(); } }, icon('undo', 'sm'), 'Annuler'));
+    undo && h('button.btn.sm.primary', { onclick: () => { dismissToast(); undo(); } }, icon('undo', 'sm'), 'Annuler'),
+    action && h('button.btn.sm.primary', { onclick: () => { dismissToast(); action.run(); } }, action.icon ? icon(action.icon, 'sm') : null, action.label));
   toastEl = el;
   toastWrap.replaceChildren(el);
   toastTimer = setTimeout(() => { if (toastEl === el) dismissToast(); }, duration);

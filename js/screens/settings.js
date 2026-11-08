@@ -6,6 +6,7 @@ import { state, saveSettings, replaceEverything, saveSchedule, saveDoc, deleteDo
 import { fmtNum, daysBetween, todayISO, fmtDateShort, clone } from '../core/util.js';
 import { buildFullBackup, buildProgramExport, parseImport, mergeProgram, exportFileName } from '../domain/backup.js';
 import { regenerateWeek } from '../domain/planning.js';
+import { DEFAULT_SETTINGS, EQUIPMENTS } from '../data/defaults.js';
 import { icon } from '../ui/icons.js';
 import { topbar, switchRow, stepper } from '../ui/components.js';
 import { go, rerender } from '../core/router.js';
@@ -48,8 +49,23 @@ export function renderSettings({ backup } = {}) {
         stepper({ label: 'Séries', value: s.defaultSets, step: 1, min: 1, size: 'sm', onChange: (v) => set({ defaultSets: v ?? 3 }) }),
         stepper({ label: 'Repos (s)', value: s.defaultRestSec, step: 15, min: 0, size: 'sm', onChange: (v) => set({ defaultRestSec: v ?? 90 }) }),
         stepper({ label: 'Reps min', value: s.defaultRepMin, step: 1, min: 1, size: 'sm', onChange: (v) => set({ defaultRepMin: v ?? 8 }) }),
-        stepper({ label: 'Reps max', value: s.defaultRepMax, step: 1, min: 1, size: 'sm', onChange: (v) => set({ defaultRepMax: v ?? 12 }) }),
-        stepper({ label: 'Incrément (kg)', value: s.defaultIncrement, step: 0.5, min: 0, size: 'sm', onChange: (v) => set({ defaultIncrement: v ?? 2.5 }) }))),
+        stepper({ label: 'Reps max', value: s.defaultRepMax, step: 1, min: 1, size: 'sm', onChange: (v) => set({ defaultRepMax: v ?? 12 }) }))),
+
+    group('Charges de ta salle', '',
+      h('p.small.muted', { style: { marginBottom: '10px' } }, 'De combien la charge monte quand l’app propose d’augmenter, selon le matériel. Une fiche exercice peut avoir sa propre valeur (ex. une machine aux paliers particuliers).'),
+      h('div.settings-grid', null,
+        EQUIPMENTS.filter((q) => q.value !== 'pdc').map((q) => {
+          const inc = { ...DEFAULT_SETTINGS.increments, ...(s.increments || {}) };
+          return stepper({ label: `${q.label.replace(' (charge par haltère)', '')} (kg)`, value: inc[q.value], step: 0.5, min: 0.5, max: 20, size: 'sm',
+            onChange: (v) => set({ increments: { ...inc, [q.value]: v ?? DEFAULT_SETTINGS.increments[q.value] } }) });
+        }),
+        stepper({ label: 'Lest (kg)', value: { ...DEFAULT_SETTINGS.increments, ...(s.increments || {}) }.pdc, step: 0.5, min: 0.5, max: 20, size: 'sm',
+          onChange: (v) => set({ increments: { ...DEFAULT_SETTINGS.increments, ...(s.increments || {}), pdc: v ?? 2.5 } }) }))),
+
+    group('Poids de corps', '',
+      h('div.settings-grid', null,
+        stepper({ label: 'Poids de corps (kg)', value: s.bodyWeight, step: 0.5, min: 30, max: 250, size: 'sm', placeholder: '—', onChange: (v) => set({ bodyWeight: v }) })),
+      h('p.tiny.faint', { style: { marginTop: '8px' } }, 'Sert au suivi des exercices au poids du corps (tractions, dips) : l’onglet Progrès compte poids de corps + lest. Optionnel.')),
 
     group('Progression et dégressives', '',
       h('div.settings-grid', null,

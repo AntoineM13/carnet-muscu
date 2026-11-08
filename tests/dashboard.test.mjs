@@ -74,3 +74,22 @@ test('dashboard : résumé de la semaine comparé au même stade la semaine dern
   assert.equal(w.sets, 2);
   assert.equal(w.records.length, 1); // volume battu sur « a »
 });
+
+test('dashboard : poids du corps + lest compté avec le poids de corps', () => {
+  const s = [
+    ses('2026-10-01', 't', 'trac', [[0, 8], [0, 6]]),
+    ses('2026-11-05', 't', 'trac', [[0, 10], [0, 7]]),
+  ];
+  const t = { id: 't', blocks: [{ slots: [{ id: 'a', exerciseId: 'trac', alternatives: [] }] }] };
+  // Sans poids de corps : tendance sur les reps.
+  const [noBw] = templateTrends(t, s, '2026-11-08');
+  assert.equal(noBw.trend, 'up');
+  assert.equal(noBw.deltaReps, 2);
+  // Avec 75 kg : charge réelle 75 kg, 1RM estimé exploitable.
+  const [bw] = templateTrends(t, s, '2026-11-08', { offsetFor: () => 75 });
+  assert.equal(bw.current.topLoad, 75);
+  assert.equal(bw.trend, 'up');
+  assert.ok(bw.deltaE1RM > 0);
+  const series = exerciseSeriesByTemplate('trac', s, 'volume', { loadOffset: 75 });
+  assert.equal(series[0].points[0].value, 75 * 14);
+});

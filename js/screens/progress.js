@@ -7,7 +7,7 @@
 import { h } from '../core/h.js';
 import { state, exerciseName, getExercise } from '../core/store.js';
 import { fmtNum, fmtInt, fmtDateShort, todayISO } from '../core/util.js';
-import { weekSummary, templateTrends } from '../domain/dashboard.js';
+import { weekSummary, templateTrends, loadOffsetFor } from '../domain/dashboard.js';
 import { exerciseHistory } from '../domain/stats.js';
 import { screenHead, emptyState } from '../ui/components.js';
 import { icon } from '../ui/icons.js';
@@ -77,25 +77,33 @@ function templateSection(today) {
     selectedTemplateId = lastDone?.templateId || templates[0].id;
   }
   const t = templates.find((x) => x.id === selectedTemplateId);
-  const rows = templateTrends(t, state.sessions, today);
+  const rows = templateTrends(t, state.sessions, today, { offsetFor: (id) => loadOffsetFor(getExercise(id), state.settings.bodyWeight) });
+  const bwMissing = !state.settings.bodyWeight && rows.some((r) => getExercise(r.exerciseId)?.loadMode === 'lest' && r.current);
   return h('section.section', null,
     h('div.section-head', null, h('h2', null, 'Par séance')),
     h('div.chips', { style: { marginBottom: '10px' } }, templates.map((x) => h(`button.chip${x.id === t.id ? '.on' : ''}`, {
       onclick: () => { selectedTemplateId = x.id; rerender(); },
     }, x.name))),
     h('p.tiny.faint', { style: { margin: '0 2px 8px' } }, 'Dernière fois dans cette séance, et évolution sur 4 semaines.'),
-    h('div.list', null, rows.map((r) => trendRow(r))));
+    h('div.list', null, rows.map((r) => trendRow(r))),
+    bwMissing ? h('p.tiny.faint', { style: { margin: '8px 2px 0' } }, 'Tractions, dips : renseigne ton poids de corps (Réglages) pour suivre la charge réelle. En attendant, la tendance se fait sur les reps.') : null);
 }
 
 function trendRow(r) {
   const name = exerciseName(r.exerciseId);
   const cur = r.current;
-  const sub = cur ? `${fmtNum(cur.topLoad)} kg × ${cur.topReps} · ${fmtDateShort(cur.date)}` : 'Pas encore fait dans cette séance';
+  const lest = getExercise(r.exerciseId)?.loadMode === 'lest';
+  // Affichage tel que saisi (lest), même si le poids de corps est compté dans les stats.
+  const shown = cur && (cur.topLoad - (r.loadOffset || 0));
+  const loadTxt = cur && (lest ? (shown ? `PDC ${shown > 0 ? '+' : '−'} ${fmtNum(Math.abs(shown))} kg` : 'PDC') : `${fmtNum(cur.topLoad)} kg`);
+  const sub = cur ? `${loadTxt} × ${cur.topReps} · ${fmtDateShort(cur.date)}` : 'Pas encore fait dans cette séance';
   let badge = null;
   if (r.trend) {
     const cls = r.trend === 'up' ? '.accent' : r.trend === 'down' ? '.warn' : '.outline';
     const ic = r.trend === 'up' ? 'up' : r.trend === 'down' ? 'down' : null;
-    const txt = r.deltaLoad ? `${r.deltaLoad > 0 ? '+' : '−'}${fmtNum(Math.abs(r.deltaLoad))} kg` : r.trend === 'flat' ? 'Stable' : (r.trend === 'up' ? 'Reps +' : 'Reps −');
+    const txt = r.deltaLoad ? `${r.deltaLoad > 0 ? '+' : '−'}${fmtNum(Math.abs(r.deltaLoad))} kg`
+      : r.deltaReps ? `${r.deltaReps > 0 ? '+' : '−'}${Math.abs(r.deltaReps)} rep${Math.abs(r.deltaReps) > 1 ? 's' : ''}`
+        : r.trend === 'flat' ? 'Stable' : (r.trend === 'up' ? 'Reps +' : 'Reps −');
     badge = h(`span.badge${cls}.num`, null, ic && icon(ic, 'sm'), txt);
   } else if (cur) badge = h('span.badge.outline', null, '1re fois');
   return h('button.list-row', {

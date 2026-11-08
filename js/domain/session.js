@@ -15,6 +15,7 @@
  * d'un superset (items consécutifs partageant le même groupId).
  */
 import { uid, clone } from '../core/util.js';
+import { effectiveIncrement } from './program.js';
 import { prefillSets } from './progression.js';
 import { proposeDropLoad } from './tools.js';
 
@@ -22,13 +23,18 @@ export function newSet(load = null, reps = null, type = 'normale') {
   return { id: uid('set'), type, done: false, doneAt: null, restTakenSec: null, rpe: null, note: '', stages: [{ load, reps }] };
 }
 
-export function targetFrom(src, settings) {
+/**
+ * Cible d'un exercice en séance. L'incrément vient de l'exercice (fiche, ou
+ * son matériel dans les Réglages) quand il est fourni ; l'ancien incrément
+ * stocké dans l'emplacement du programme n'est plus qu'un repli.
+ */
+export function targetFrom(src, settings, exercise = null) {
   return {
     sets: src?.sets ?? settings.defaultSets,
     repMin: src?.repMin ?? settings.defaultRepMin,
     repMax: src?.repMax ?? settings.defaultRepMax,
     restSec: src?.restSec ?? settings.defaultRestSec,
-    increment: src?.increment ?? settings.defaultIncrement,
+    increment: exercise ? effectiveIncrement(exercise, settings) : (src?.increment ?? settings.defaultIncrement),
   };
 }
 
@@ -77,7 +83,7 @@ export function createSession({ template = null, date, plannedItemId = null, for
       if (!ctx.getExercise(slot.exerciseId)) continue;
       const exerciseId = lastChoiceForSlot(slot, ctx.sessions);
       session.items.push(newItem({
-        exerciseId, target: targetFrom(slot, ctx.settings), slotId: slot.id,
+        exerciseId, target: targetFrom(slot, ctx.settings, ctx.getExercise(exerciseId)), slotId: slot.id,
         alternatives: [slot.exerciseId, ...(slot.alternatives || [])].filter((id) => ctx.getExercise(id)),
         groupId, ctx: { ...ctx, session },
       }));
@@ -214,11 +220,47 @@ export function startRest(session, setId, durationSec, now = Date.now()) {
 }
 
 /** Arrête le chrono et enregistre le repos réellement pris. */
+/** Au-delà, le repos n'est pas enregistré (app oubliée, saisie après coup). */
+export const MAX_RECORDED_REST_SEC = 15 * 60;
+
 export function closeRest(session, now = Date.now()) {
   if (!session.rest) return;
   const { set } = findSet(session, session.rest.setId);
-  if (set) set.restTakenSec = Math.round((now - session.rest.startedAt) / 1000);
+  const sec = Math.round((now - session.rest.startedAt) / 1000);
+  if (set) set.restTakenSec = sec <= MAX_RECORDED_REST_SEC ? sec : null;
   session.rest = null;
+}
+
+/**
+ * Série qui ressemble au palier d'une dégressive saisi comme une série à part :
+ * validée moins de `windowSec` après la série précédente du même exercice,
+ * avec une charge plus basse d'au moins `minDropPct` %.
+ * @returns la série précédente (à laquelle rattacher le palier), ou null
+ */
+export function dropCandidate(session, setId, { windowSec = 20, minDropPct = 15 } = {}) {
+  const { item, set } = findSet(session, setId);
+  if (!set?.done || set.type === 'echauffement' || set.stages.length !== 1 || !set.doneAt) return null;
+  const idx = item.sets.indexOf(set);
+  const prev = [...item.sets.slice(0, idx)].reverse().find((s) => s.done && s.type !== 'echauffement');
+  if (!prev?.doneAt) return null;
+  const gap = (new Date(set.doneAt) - new Date(prev.doneAt)) / 1000;
+  const prevLoad = Number(prev.stages[prev.stages.length - 1].load);
+  const load = Number(set.stages[0].load);
+  if (!(gap >= 0 && gap <= windowSec) || !(prevLoad > 0) || !(load >= 0)) return null;
+  return load <= prevLoad * (1 - minDropPct / 100) ? prev : null;
+}
+
+/** Rattache une série comme palier dégressif de la série précédente. */
+export function mergeIntoDrop(session, prevSetId, setId) {
+  const { item, set } = findSet(session, setId);
+  const { set: prev } = findSet(session, prevSetId);
+  if (!item || !prev || !set) return false;
+  prev.type = 'degressive';
+  prev.stages.push(...set.stages.map((st) => ({ load: st.load, reps: st.reps })));
+  prev.restTakenSec = set.restTakenSec;
+  if (session.rest?.setId === set.id) session.rest.setId = prev.id;
+  item.sets.splice(item.sets.indexOf(set), 1);
+  return true;
 }
 
 export function adjustRest(session, deltaSec) {
@@ -334,7 +376,9 @@ export function replaceExercise(session, itemId, newExerciseId, ctx) {
   if (!item) return null;
   const doneSets = item.sets.filter((s) => s.done);
   const fresh = newItem({
-    exerciseId: newExerciseId, target: item.target, slotId: item.slotId,
+    exerciseId: newExerciseId,
+    target: { ...item.target, increment: effectiveIncrement(ctx.getExercise?.(newExerciseId), ctx.settings || {}) },
+    slotId: item.slotId,
     alternatives: item.alternatives, groupId: item.groupId, ctx,
   });
   if (!doneSets.length) {

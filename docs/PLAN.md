@@ -33,6 +33,7 @@ Antoine a des retours d'usage à transmettre. Les traiter **sur la branche `sync
   - [x] message « Annuler » qui bloquait les suppressions enchaînées dans l'éditeur de séance ;
   - [x] progression : force / volume du même exercice dans deux séances (référence = même séance) ;
   - [x] onglet « Progrès » (remplace Objectifs) : résumé de la semaine, tableau par séance, courbes par séance ;
+  - [x] lot 2 (analyse de l'export) : incréments par matériel (réglables) et par exercice, poids de corps, détection des dégressives, repos > 15 min ignoré, fusion de doublons, fond sous la Dynamic Island ;
   - [ ] banque d'exercices commune : banque intégrée FR/EN + description (~150-200 exercices), plus ajouts partagés via une table Supabase commune (`bank`, lecture par tous les connectés, écriture par l'auteur).
 - [ ] Implémenter, tester (`node --test tests/*.test.mjs`), republier en test.
 - [ ] Ajustements Android :

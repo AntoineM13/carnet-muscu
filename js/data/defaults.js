@@ -15,7 +15,12 @@ export const DEFAULT_SETTINGS = {
   defaultRepMin: 8,
   defaultRepMax: 12,
   defaultRestSec: 90,
-  defaultIncrement: 2.5,
+  defaultIncrement: 2.5,      // repli si le matériel est inconnu
+  // Incrément (kg) proposé pour monter en charge, selon le matériel. Modifiable
+  // selon la salle (Réglages) ; une fiche exercice peut fixer sa propre valeur.
+  increments: { barre: 2.5, halteres: 2, machine: 5, poulie: 5, pdc: 2.5, autre: 2.5 },
+  // Poids de corps (kg) : sert aux stats des exercices au poids du corps + lest.
+  bodyWeight: null,
   // Supersets : lancer le repos après chaque tour complet (A1+B1)
   supersetRestAfterRound: true,
   // Progression

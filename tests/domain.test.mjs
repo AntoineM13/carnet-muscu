@@ -269,3 +269,64 @@ test('progression : à défaut de la même séance, même plage de reps, sinon l
   assert.equal(autre.context, 'autre');
   assert.equal(autre.date, '2026-10-03');
 });
+
+import { effectiveIncrement } from '../js/domain/program.js';
+test('incrément : fiche exercice, sinon matériel (réglable), sinon défaut', () => {
+  assert.equal(effectiveIncrement({ equipment: 'halteres' }, DEFAULT_SETTINGS), 2);
+  assert.equal(effectiveIncrement({ equipment: 'poulie' }, DEFAULT_SETTINGS), 5);
+  assert.equal(effectiveIncrement({ equipment: 'barre' }, DEFAULT_SETTINGS), 2.5);
+  assert.equal(effectiveIncrement({ equipment: 'halteres', increment: 1 }, DEFAULT_SETTINGS), 1);
+  assert.equal(effectiveIncrement({ equipment: 'machine' }, { ...DEFAULT_SETTINGS, increments: { machine: 4.5 } }), 4.5);
+  // Ancien réglage sans « increments » : valeurs par défaut du matériel.
+  assert.equal(effectiveIncrement({ equipment: 'halteres' }, { defaultIncrement: 2.5 }), 2);
+  const t = S.targetFrom({ sets: 3, repMin: 8, repMax: 12, restSec: 90, increment: 2.5 }, DEFAULT_SETTINGS, { equipment: 'halteres' });
+  assert.equal(t.increment, 2);
+});
+
+test('dégressive saisie à part : détectée puis regroupée', () => {
+  const at = (sec) => new Date(Date.UTC(2026, 10, 8, 10, 0, sec)).toISOString();
+  const mk = (id, load, reps, sec, type = 'normale') => ({ id, type, done: true, doneAt: at(sec), restTakenSec: null, stages: [{ load, reps }] });
+  const session = { rest: null, items: [{ id: 'it', exerciseId: 'ext', target: {}, sets: [mk('a', 100, 10, 0), mk('b', 100, 10, 150), mk('c', 73, 10, 156)] }] };
+  assert.equal(S.dropCandidate(session, 'b'), null);      // 150 s après : vraie série
+  assert.equal(S.dropCandidate(session, 'c').id, 'b');    // 6 s après, −27 % : palier
+  // Saisie groupée à la fin, charge à peine plus basse : pas de proposition.
+  const s2 = { rest: null, items: [{ id: 'it', exerciseId: 'dc', target: {}, sets: [mk('x', 100, 5, 0), mk('y', 90, 7, 10)] }] };
+  assert.equal(S.dropCandidate(s2, 'y'), null);
+  assert.ok(S.mergeIntoDrop(session, 'b', 'c'));
+  const sets = session.items[0].sets;
+  assert.equal(sets.length, 2);
+  assert.equal(sets[1].type, 'degressive');
+  assert.deepEqual(sets[1].stages, [{ load: 100, reps: 10 }, { load: 73, reps: 10 }]);
+});
+
+test('repos : non enregistré au-delà de 15 min (app oubliée)', () => {
+  const session = { rest: { setId: 'a', startedAt: 0 }, items: [{ id: 'it', sets: [{ id: 'a', stages: [{}] }] }] };
+  S.closeRest(session, 16 * 60 * 1000);
+  assert.equal(session.items[0].sets[0].restTakenSec, null);
+  session.rest = { setId: 'a', startedAt: 0 };
+  S.closeRest(session, 120 * 1000);
+  assert.equal(session.items[0].sets[0].restTakenSec, 120);
+});
+
+import { mergeExercises } from '../js/domain/program.js';
+test('fusion de deux exercices : historique, programme, objectifs et notes regroupés', () => {
+  const from = { id: 'dup', name: 'Fentes bulgares', notes: 'banc bas' };
+  const to = { id: 'keep', name: 'Squat bulgare', notes: '' };
+  const sessions = [
+    { id: 's1', status: 'done', items: [{ exerciseId: 'dup', alternatives: ['dup', 'other'], sets: [] }] },
+    { id: 's2', status: 'done', items: [{ exerciseId: 'other', replacedBy: 'dup', sets: [] }] },
+    { id: 's3', status: 'done', items: [{ exerciseId: 'other', sets: [] }] },
+  ];
+  const templates = [{ id: 't', blocks: [{ slots: [{ exerciseId: 'keep', alternatives: ['dup', 'x'] }, { exerciseId: 'dup', alternatives: [] }] }] }];
+  const goals = [{ id: 'g', exerciseId: 'dup' }];
+  const res = mergeExercises({ sessions, templates, goals, from, to });
+  assert.equal(res.sessions.length, 2);
+  assert.equal(res.historyCount, 2);
+  assert.equal(sessions[0].items[0].exerciseId, 'keep');
+  assert.deepEqual(sessions[0].items[0].alternatives, ['keep', 'other']);
+  assert.equal(sessions[1].items[0].replacedBy, 'keep');
+  assert.deepEqual(templates[0].blocks[0].slots[0].alternatives, ['x']); // plus d'alternative vers lui-même
+  assert.equal(templates[0].blocks[0].slots[1].exerciseId, 'keep');
+  assert.equal(goals[0].exerciseId, 'keep');
+  assert.equal(to.notes, 'banc bas');
+});

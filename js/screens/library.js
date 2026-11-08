@@ -6,13 +6,14 @@ import { h } from '../core/h.js';
 import { state, getExercise } from '../core/store.js';
 import { norm, fmtDateShort, fmtNum } from '../core/util.js';
 import { MUSCLE_GROUPS, EQUIPMENTS } from '../data/defaults.js';
-import { newExercise } from '../domain/program.js';
+import { newExercise, effectiveIncrement } from '../domain/program.js';
 import { exerciseHistory, formatSets } from '../domain/stats.js';
-import { saveExercise, removeExercise } from '../core/actions.js';
+import { saveExercise, removeExercise, mergeExerciseInto } from '../core/actions.js';
 import { icon } from '../ui/icons.js';
-import { topbar, field, selectInput, switchRow, textarea, emptyState } from '../ui/components.js';
+import { topbar, field, selectInput, switchRow, textarea, emptyState, stepper } from '../ui/components.js';
 import { go, rerender } from '../core/router.js';
-import { confirmAction } from '../ui/overlay.js';
+import { confirmAction, toast } from '../ui/overlay.js';
+import { pickExercise } from '../ui/pickers.js';
 import { exerciseProgressSection } from './exercise-progress.js';
 
 let query = '';
@@ -76,6 +77,7 @@ export function renderExercise({ id, new: isNew }) {
       h('div.field-row', null,
         field('Groupe musculaire', selectInput(MUSCLE_GROUPS.map((g) => ({ value: g, label: g })), e.muscleGroup, (v) => upd({ muscleGroup: v }))),
         field('Matériel', selectInput(EQUIPMENTS.map((q) => ({ ...q, label: q.label.replace(' (charge par haltère)', '') })), e.equipment, (v) => upd({ equipment: v, loadMode: v === 'pdc' ? 'lest' : e.loadMode }, true)))),
+      incrementField(e, upd),
       h('div.list', null,
         switchRow('Poids du corps + lest', e.loadMode === 'lest', (v) => upd({ loadMode: v ? 'lest' : 'charge' }), '0 = sans lest, négatif = assistance'),
         switchRow('Unilatéral', !!e.unilateral, (v) => upd({ unilateral: v }), 'Reps saisies par côté'))),
@@ -102,12 +104,44 @@ export function renderExercise({ id, new: isNew }) {
           h('span.chev', null, icon('chevron', 'sm')))))
         : emptyState('history', 'Pas encore d’historique.')),
 
+    h('button.btn.ghost.block', { style: { marginTop: '28px' }, onclick: () => mergeFlow(e) }, icon('link', 'sm'), 'Fusionner avec un autre exercice…'),
+    h('p.tiny.faint', { style: { margin: '6px 2px 0' } }, 'Pour un doublon (même exercice sous deux noms) : l’historique, le programme et les objectifs sont regroupés.'),
+
     !e.archived && h('button.btn.danger.block', {
-      style: { marginTop: '28px' },
+      style: { marginTop: '16px' },
       onclick: async () => {
         const ok = await confirmAction({ title: `Supprimer « ${e.name} » ?`, message: 'S’il a déjà été utilisé, il sera archivé et son historique conservé.' });
         if (ok) { go('/library'); removeExercise(e); }
       },
     }, icon('trash', 'sm'), 'Supprimer l’exercice'));
   return { node, tab: null };
+}
+
+/** Incrément propre à l'exercice (sinon : celui de son matériel, dans les Réglages). */
+function incrementField(e, upd) {
+  const own = e.increment != null;
+  const byEquipment = effectiveIncrement({ ...e, increment: null }, state.settings);
+  return h('div', null,
+    stepper({ label: 'Augmentation proposée (kg)', value: effectiveIncrement(e, state.settings), step: 0.5, min: 0.5, max: 20,
+      onChange: (v) => upd({ increment: v == null || v === byEquipment ? null : v }, true) }),
+    h('p.tiny.faint', { style: { marginTop: '6px' } }, own
+      ? h('span', null, `Valeur propre à cet exercice. `, h('button.link', { style: { padding: '0' }, onclick: () => upd({ increment: null }, true) }, `Revenir au matériel (${fmtNum(byEquipment)} kg)`))
+      : 'Selon le matériel (Réglages → Charges de ta salle).'));
+}
+
+/** Fusion d'un doublon : on choisit l'exercice à GARDER. */
+async function mergeFlow(e) {
+  const keepId = await pickExercise({ title: `Fusionner « ${e.name} » dans…`, exclude: [e.id] });
+  if (!keepId) return;
+  const keep = getExercise(keepId);
+  const n = exerciseHistory(e.id, state.sessions).length;
+  const ok = await confirmAction({
+    title: `Fusionner dans « ${keep.name} » ?`,
+    message: `« ${e.name} » disparaît de la bibliothèque. Son historique (${n} séance${n > 1 ? 's' : ''}), sa place dans le programme, ses objectifs et ses notes passent sur « ${keep.name} ». Tu pourras annuler.`,
+    confirmLabel: 'Fusionner', danger: false,
+  });
+  if (!ok) return;
+  const { undo } = mergeExerciseInto(e, keep);
+  go(`/exercise/${keep.id}`, { replace: true });
+  toast(`Fusionné dans « ${keep.name} »`, { undo: () => { undo(); go(`/exercise/${e.id}`, { replace: true }); } });
 }

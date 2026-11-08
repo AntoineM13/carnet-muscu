@@ -8,7 +8,7 @@ import { fmtNum, fmtInt, fmtDateShort } from '../core/util.js';
 import { personalRecords, e1rm } from '../domain/stats.js';
 import { goalProgress } from '../domain/goals.js';
 import { multiLineChart, segmented } from '../ui/components.js';
-import { exerciseSeriesByTemplate } from '../domain/dashboard.js';
+import { exerciseSeriesByTemplate, loadOffsetFor } from '../domain/dashboard.js';
 import { icon } from '../ui/icons.js';
 import { rerender } from '../core/router.js';
 import { goalCard, createGoal } from './goals.js';
@@ -26,7 +26,8 @@ const METRICS = [
  */
 export function exerciseChart(e) {
   const goals = state.goals.filter((g) => g.exerciseId === e.id);
-  const series = exerciseSeriesByTemplate(e.id, state.sessions, metric);
+  const loadOffset = loadOffsetFor(e, state.settings.bodyWeight);
+  const series = exerciseSeriesByTemplate(e.id, state.sessions, metric, { loadOffset });
   // Ligne d'objectif sur le graphique (premier objectif de l'exercice).
   const g0 = goals[0];
   let goalLine = null;
@@ -39,7 +40,8 @@ export function exerciseChart(e) {
       hasPoints ? multiLineChart(series, { target: goalLine, fmtX: fmtDateShort, fmtY: (v) => (metric === 'volume' ? fmtInt(v) : fmtNum(v, 1)) })
         : h('p.muted.small.center', { style: { padding: '28px 0' } }, 'Le graphique apparaîtra après ta première séance.'),
       goalLine != null && hasPoints ? h('p.tiny.faint', { style: { padding: '0 8px 6px' } }, 'Pointillés horizontaux : objectif') : null,
-      series.length > 1 ? h('p.tiny.faint', { style: { padding: '0 8px 6px' } }, 'Une courbe par séance : la force et le volume ne se mélangent pas. Le 1RM estimé permet de les comparer.') : null));
+      series.length > 1 ? h('p.tiny.faint', { style: { padding: '0 8px 6px' } }, 'Une courbe par séance : la force et le volume ne se mélangent pas. Le 1RM estimé permet de les comparer.') : null,
+      e.loadMode === 'lest' ? h('p.tiny.faint', { style: { padding: '0 8px 6px' } }, loadOffset ? `Charge = poids de corps (${fmtNum(loadOffset)} kg) + lest.` : 'Renseigne ton poids de corps (Réglages) pour une courbe de charge réelle.') : null));
 }
 
 export function exerciseProgressSection(e) {

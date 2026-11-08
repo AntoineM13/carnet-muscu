@@ -36,14 +36,21 @@ export function e1rm(load, reps) {
 /** Ordre chronologique d'une séance. */
 export const sessionKey = (s) => `${s.date}T${s.startedAt || ''}`;
 
-/** Statistiques d'un exercice dans UNE séance (tous ses items confondus). */
-export function exerciseStatsInSession(session, exerciseId) {
+/**
+ * Statistiques d'un exercice dans UNE séance (tous ses items confondus).
+ * `loadOffset` (kg) s'ajoute à chaque charge : poids de corps pour un exercice
+ * « poids du corps + lest », afin que tractions et dips aient un volume et un
+ * 1RM estimé. 0 par défaut (charges telles que saisies).
+ */
+export function exerciseStatsInSession(session, exerciseId, { loadOffset = 0 } = {}) {
   const sets = session.items.filter((it) => it.exerciseId === exerciseId).flatMap((it) => it.sets);
   const work = sets.filter(isWorkSet);
   let topLoad = null; let topReps = null; let bestE1RM = null; let volume = 0;
   for (const s of work) {
-    const { load, reps } = mainStage(s);
-    volume += setVolume(s);
+    const st0 = mainStage(s);
+    const load = st0.load == null ? null : Number(st0.load) + loadOffset;
+    const { reps } = st0;
+    volume += loadOffset ? s.stages.reduce((acc, st) => acc + ((Number(st.load) || 0) + loadOffset) * (Number(st.reps) || 0), 0) : setVolume(s);
     if (reps > 0 && load != null && (topLoad === null || load > topLoad || (load === topLoad && reps > topReps))) {
       topLoad = load; topReps = reps;
     }
@@ -57,11 +64,11 @@ export function exerciseStatsInSession(session, exerciseId) {
  * Historique chronologique (ancien -> récent) d'un exercice :
  * [{ session, date, stats }] pour chaque séance TERMINÉE où il a été fait.
  */
-export function exerciseHistory(exerciseId, sessions, { excludeSessionId = null } = {}) {
+export function exerciseHistory(exerciseId, sessions, { excludeSessionId = null, loadOffset = 0 } = {}) {
   return sessions
     .filter((s) => s.status === 'done' && s.id !== excludeSessionId && s.items.some((it) => it.exerciseId === exerciseId))
     .sort((a, b) => sessionKey(a).localeCompare(sessionKey(b)))
-    .map((s) => ({ session: s, date: s.date, stats: exerciseStatsInSession(s, exerciseId) }))
+    .map((s) => ({ session: s, date: s.date, stats: exerciseStatsInSession(s, exerciseId, { loadOffset }) }))
     .filter((h) => h.stats.workSets.length > 0);
 }
 
