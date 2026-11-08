@@ -12,55 +12,61 @@ import { saveExercise, removeExercise, mergeExerciseInto } from '../core/actions
 import { icon } from '../ui/icons.js';
 import { topbar, field, selectInput, switchRow, textarea, emptyState, stepper, segmented } from '../ui/components.js';
 import { go, rerender } from '../core/router.js';
-import { confirmAction, toast } from '../ui/overlay.js';
+import { confirmAction, toast, openSheet } from '../ui/overlay.js';
+import { exerciseBrowser, addFromBank, openBankSheet } from '../ui/exercise-browser.js';
+import { enrichExercise } from '../domain/bank.js';
+import { refreshSharedBankSoon, bankIndex, shareToBank, sharedEntry } from '../core/bank-store.js';
+import { syncStatus } from '../core/sync.js';
 import { editMuscles } from '../ui/muscle-picker.js';
 import { musclesSummary } from '../domain/muscles.js';
-import { MECHANICS } from '../data/muscles.js';
+import { MECHANICS, MUSCLE_TREE } from '../data/muscles.js';
 import { pickExercise } from '../ui/pickers.js';
 import { exerciseProgressSection } from './exercise-progress.js';
 
-let query = '';
+// État de l'explorateur (gardé pendant la session de l'app).
+const ui = { q: '', group: null, mechanic: null, equipment: null, showAlso: false };
 
-export function renderLibrary() {
-  const list = state.exercises
-    .filter((e) => !e.archived)
-    .filter((e) => !query || norm(`${e.name} ${e.standard} ${e.muscleGroup}`).includes(norm(query)))
-    .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
-  const groups = {};
-  for (const e of list) (groups[e.muscleGroup] ||= []).push(e);
+export function renderLibrary({ group = null } = {}) {
+  refreshSharedBankSoon();
+  ui.group = group;
+  if (!group) { ui.mechanic = null; ui.equipment = null; }
+  const gLabel = MUSCLE_TREE.find((g) => g.id === group)?.label;
   const archived = state.exercises.filter((e) => e.archived);
 
   const node = h('main.screen.no-tabs', null,
-    topbar('Bibliothèque', {
-      backTo: '/program',
+    topbar(gLabel || 'Bibliothèque', {
+      backTo: group && !ui.q ? '/library' : '/program',
       actions: h('button.icon-btn.accent', {
         'aria-label': 'Nouvel exercice',
-        onclick: () => { const e = newExercise(); saveExercise(e, { silent: true }); go(`/exercise/${e.id}?new=1`); },
+        onclick: () => createExercise(),
       }, icon('plus')),
     }),
     h('input.input', {
-      type: 'search', placeholder: 'Rechercher un exercice', value: query,
-      oninput: (e) => { query = e.target.value; const pos = e.target.selectionStart; rerender(); const el = document.querySelector('main input[type=search]'); el?.focus(); el?.setSelectionRange(pos, pos); },
+      type: 'search', placeholder: 'Rechercher (français ou anglais)', value: ui.q,
+      oninput: (e) => { ui.q = e.target.value; const pos = e.target.selectionStart; rerender(); const el = document.querySelector('main input[type=search]'); el?.focus(); el?.setSelectionRange(pos, pos); },
     }),
-    ...MUSCLE_GROUPS.filter((g) => groups[g]).map((g) => [
-      h('div.eyebrow.list-group-title', null, g),
-      h('div.list', null, groups[g].map((e) => {
-        const n = exerciseHistory(e.id, state.sessions).length;
-        return h('button.list-row', { onclick: () => go(`/exercise/${e.id}`) },
-          h('div.grow', null,
-            h('div.title.ellipsis', null, e.name),
-            h('div.sub.ellipsis', null, [e.standard !== e.name ? e.standard : null, n ? `${n} séance${n > 1 ? 's' : ''}` : null].filter(Boolean).join(' · ') || '—')),
-          e.pain?.active ? h('span.badge.warn', null, icon('alert', 'sm')) : null,
-          e.notes ? h('span.faint', null, icon('note', 'sm')) : null,
-          h('span.chev', null, icon('chevron', 'sm')));
-      })),
-    ]),
-    !list.length && emptyState('search', 'Aucun exercice.'),
-    archived.length ? h('details.archived', null,
+    h('div', { style: { height: '6px' } }),
+    exerciseBrowser(ui, {
+      setGroup: (id) => go(id ? `/library/g/${id}` : '/library'),
+      refresh: () => rerender(),
+      openMine: (id) => go(`/exercise/${id}`),
+      openBank: (b) => openBankSheet(b),
+      addBank: (b) => { addFromBank(b); rerender(); },
+    }),
+    !group && !ui.q && archived.length ? h('details.archived', null,
       h('summary.eyebrow.list-group-title', null, `Archivés (${archived.length})`),
       h('div.list', null, archived.map((e) => h('button.list-row', { onclick: () => go(`/exercise/${e.id}`) },
         h('div.grow.faint', null, e.name), h('span.chev', null, icon('chevron', 'sm')))))) : null);
   return { node, tab: null };
+}
+
+/** Création d'un exercice personnel (le groupe ouvert est proposé par défaut). */
+function createExercise() {
+  const g = MUSCLE_TREE.find((x) => x.id === ui.group);
+  const e = newExercise({ muscleGroup: g?.label || 'Autre' });
+  if (g && g.id !== 'autre') e.muscles = { primary: [g.id], secondary: [] };
+  saveExercise(e, { silent: true });
+  go(`/exercise/${e.id}?new=1`);
 }
 
 export function renderExercise({ id, new: isNew }) {
@@ -68,6 +74,8 @@ export function renderExercise({ id, new: isNew }) {
   if (!e) { go('/library', { replace: true }); return { node: h('div'), tab: null }; }
   const upd = (patch, redraw = false) => { Object.assign(e, patch); saveExercise(e, { silent: true }); if (redraw) rerender(); };
   const hist = exerciseHistory(e.id, state.sessions).reverse();
+  // Vue complétée par la banque (muscles, type, description) si l'exercice y est lié.
+  const view = enrichExercise(e, bankIndex());
 
   const node = h('main.screen.no-tabs', null,
     topbar(e.name, { backTo: null }),
@@ -77,9 +85,10 @@ export function renderExercise({ id, new: isNew }) {
     h('div.stack', null,
       field('Nom affiché', h('input.input', { type: 'text', value: e.name, autofocus: isNew ? true : null, onchange: (ev) => upd({ name: ev.target.value.trim() || e.name }, true) })),
       field('Nom standardisé', h('input.input', { type: 'text', value: e.standard || '', placeholder: 'Optionnel', onchange: (ev) => upd({ standard: ev.target.value.trim() }) })),
-      field('Muscles travaillés', h('button.option', { onclick: () => editMuscles(e, () => { saveExercise(e, { silent: true }); rerender(); }) },
-        h('div.grow', null, h('div.t', null, musclesSummary(e)), h('div.d', null, e.muscles?.primary?.length ? 'Toucher pour modifier' : 'Toucher pour préciser (principal, secondaires)')), icon('chevron', 'sm'))),
-      field('Type de mouvement', segmented([...MECHANICS.map((m) => ({ value: m.value, label: m.label })), { value: null, label: 'Non précisé' }], e.mechanic ?? null, (v) => upd({ mechanic: v }, true))),
+      field('Muscles travaillés', h('button.option', { onclick: () => editMuscles(e, view.muscles, () => { saveExercise(e, { silent: true }); rerender(); }) },
+        h('div.grow', null, h('div.t', null, musclesSummary(view)), h('div.d', null, view.muscles?.primary?.length ? 'Toucher pour modifier' : 'Toucher pour préciser (principal, secondaires)')), icon('chevron', 'sm'))),
+      field('Type de mouvement', segmented([...MECHANICS.map((m) => ({ value: m.value, label: m.label })), { value: null, label: 'Non précisé' }], view.mechanic ?? null, (v) => upd({ mechanic: v }, true))),
+      descriptionField(e, view, upd),
       h('div.field-row', null,
         field('Matériel', selectInput(EQUIPMENTS.map((q) => ({ ...q, label: q.label.replace(' (charge par haltère)', '') })), e.equipment, (v) => upd({ equipment: v, loadMode: v === 'pdc' ? 'lest' : e.loadMode }, true)))),
       incrementField(e, upd),
@@ -149,4 +158,27 @@ async function mergeFlow(e) {
   const { undo } = mergeExerciseInto(e, keep);
   go(`/exercise/${keep.id}`, { replace: true });
   toast(`Fusionné dans « ${keep.name} »`, { undo: () => { undo(); go(`/exercise/${e.id}`, { replace: true }); } });
+}
+
+/**
+ * Description : celle de la banque pour un exercice de la banque intégrée
+ * (lecture seule), sinon modifiable, avec le partage dans la banque commune.
+ */
+function descriptionField(e, view, upd) {
+  if (view.inBank === 'app') {
+    return view.description ? field('Description', h('p.small', { style: { margin: '2px 2px 0', lineHeight: '1.5', color: 'var(--text-2)' } }, view.description)) : null;
+  }
+  const shared = sharedEntry(e.id);
+  const mine = !shared || shared.author === syncStatus.user?.id;
+  return h('div', null,
+    field('Description (optionnelle)', textarea(e.description || view.description || '', (v) => upd({ description: v }), { placeholder: 'Comment se fait l’exercice, en une ou deux phrases.' })),
+    syncStatus.user && mine ? h('button.btn.ghost.block', {
+      style: { marginTop: '10px' },
+      onclick: async () => {
+        if (!e.name.trim() || e.name === 'Nouvel exercice') { toast('Donne d’abord un nom à l’exercice.'); return; }
+        try { await shareToBank(e); toast(shared ? 'Banque commune mise à jour' : 'Partagé dans la banque commune'); rerender(); } catch (err) { toast(err.message); }
+      },
+    }, icon('upload', 'sm'), shared ? 'Mettre à jour dans la banque commune' : 'Partager dans la banque commune') : null,
+    shared ? h('p.tiny.faint', { style: { margin: '6px 2px 0' } }, mine ? 'Visible par tous dans la banque commune.' : 'Exercice de la banque commune, proposé par un autre utilisateur.')
+      : syncStatus.user ? h('p.tiny.faint', { style: { margin: '6px 2px 0' } }, 'Les autres pourront l’ajouter à leur bibliothèque.') : null);
 }

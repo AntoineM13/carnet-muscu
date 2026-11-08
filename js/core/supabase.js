@@ -137,6 +137,20 @@ export function createSupabaseClient({ url, key, loadSession, saveSession, fetch
       return (await authed(`/rest/v1/docs?${params}`)) || [];
     },
 
+    /** Banque commune : toutes les entrées partagées par les utilisateurs. */
+    async listBank() {
+      return (await authed('/rest/v1/bank?select=id,data,created_by,updated_at&order=updated_at.asc&limit=2000')) || [];
+    },
+
+    /** Banque commune : ajoute ou met à jour une entrée (seul son auteur peut la modifier). */
+    async upsertBank(id, data) {
+      await authed('/rest/v1/bank?on_conflict=id', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: [{ id, data, created_by: session?.user?.id }],
+      });
+    },
+
     /** Envoie (insère ou remplace) des lignes. */
     async pushDocs(rows) {
       if (!rows.length) return;

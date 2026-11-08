@@ -13,6 +13,7 @@ import { setChangeHook, getLocalDoc, listLocalKeys, applyRemoteDoc, notify, save
 import { createSyncEngine, emptySyncState } from './sync-engine.js';
 import { createSupabaseClient } from './supabase.js';
 import { SYNC_CONFIG } from '../data/sync-config.js';
+import { initBank, refreshSharedBank } from './bank-store.js';
 
 const kvGet = async (key) => (await db.get('kv', key))?.value ?? null;
 const kvPut = (key, value) => db.put('kv', { key, value });
@@ -63,7 +64,9 @@ export async function initSync() {
     loadSession: () => kvGet('auth'),
     saveSession: (s) => kvPut('auth', s),
   });
+  await initBank(client);
   const user = await client.getUser();
+  if (user) refreshSharedBank();
   engine = newEngine((await kvGet('sync')) || emptySyncState());
   setChangeHook((collection, id) => {
     if (!syncStatus.user) return;
@@ -137,6 +140,7 @@ export async function signIn(email, password, { create = false } = {}) {
   startInterval();
   const res = await syncNow();
   if (res?.hadRemoteData && !state.meta.onboarded) saveMeta({ onboarded: true });
+  refreshSharedBank();
   refreshUi();
   return { hadRemoteData: !!res?.hadRemoteData, ok: !!res };
 }

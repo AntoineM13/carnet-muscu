@@ -31,6 +31,7 @@ route('/program', renderProgram);
 route('/program/schedule', renderSchedule);
 route('/program/t/:id', renderTemplateEdit);
 route('/library', renderLibrary);
+route('/library/g/:group', renderLibrary);
 route('/exercise/:id', renderExercise);
 route('/history', renderHistory);
 route('/history/:id', renderHistoryDetail);

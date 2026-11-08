@@ -1,68 +1,72 @@
 /**
- * Choix des muscles d'un exercice : principaux (1 ou 2) et secondaires.
- * Simple par défaut : on touche un GROUPE. Ses parties n'apparaissent que
- * lorsqu'il est choisi, pour préciser si on le souhaite (« descendre »).
+ * Choix des muscles d'un exercice : UN écran, sans onglets.
+ *  - Chaque ligne a un bouton qui défile au toucher : — → Principal → Secondaire → —
+ *    (Principal = vert plein, Secondaire = contour vert, — = gris).
+ *  - Seuls les groupes déjà choisis sont affichés, avec leurs parties pour
+ *    préciser ; « + Autre muscle » ajoute un groupe.
+ *  - 2 principaux au maximum (le plus ancien repasse en secondaire).
  */
 import { h } from '../core/h.js';
 import { MUSCLE_TREE } from '../data/muscles.js';
-import { exerciseMuscles, groupOf, isGroup, setMuscles } from '../domain/muscles.js';
+import { groupOf, isGroup, setMuscles } from '../domain/muscles.js';
 import { openSheet } from './overlay.js';
-import { segmented } from './components.js';
+import { icon } from './icons.js';
+
+const NEXT = { none: 'primary', primary: 'secondary', secondary: 'none' };
+const LABEL = { none: '—', primary: 'Principal', secondary: 'Secondaire' };
 
 /**
- * Ouvre la feuille. `onSave(exercise)` est appelé à chaque modification
- * (l'exercice passé est modifié en place).
+ * @param {object} exercise exercice modifié en place
+ * @param {{primary:string[], secondary:string[]}} initial muscles de départ (ex. ceux de la banque)
+ * @param {function} onSave appelé à chaque modification
  */
-export function editMuscles(exercise, onSave) {
-  let mode = 'primary';
-  const cur = exerciseMuscles(exercise);
-  const sel = { primary: exercise.muscles?.primary?.length ? [...cur.primary] : (cur.primary[0] === 'autre' ? [] : [...cur.primary]), secondary: [...cur.secondary] };
+export function editMuscles(exercise, initial, onSave) {
+  const sel = { primary: [...(initial?.primary || [])].filter((m) => m !== 'autre'), secondary: [...(initial?.secondary || [])] };
+  const shown = new Set([...sel.primary, ...sel.secondary].map(groupOf).filter(Boolean));
+  let adding = shown.size === 0;
 
-  const apply = () => { setMuscles(exercise, sel); onSave(exercise); };
+  const stateOf = (id) => (sel.primary.includes(id) ? 'primary' : sel.secondary.includes(id) ? 'secondary' : 'none');
+  const save = () => { setMuscles(exercise, sel); onSave(exercise); };
 
-  /** Touche un groupe ou une partie dans la liste du mode courant. */
-  const toggle = (id) => {
-    const list = sel[mode];
-    const other = mode === 'primary' ? 'secondary' : 'primary';
+  const cycle = (id) => {
+    const next = NEXT[stateOf(id)];
+    sel.primary = sel.primary.filter((x) => x !== id);
+    sel.secondary = sel.secondary.filter((x) => x !== id);
+    // Un groupe entier et ses parties s'excluent : on garde le choix le plus récent.
     const g = groupOf(id);
-    if (list.includes(id)) {
-      sel[mode] = list.filter((x) => x !== id);
-    } else {
-      // Groupe et parties du même groupe s'excluent : on garde le plus précis choisi en dernier.
-      let next = list.filter((x) => (isGroup(id) ? groupOf(x) !== g : x !== g));
-      next.push(id);
-      if (mode === 'primary' && next.length > 2) next = next.slice(-2);
-      sel[mode] = next;
-      sel[other] = sel[other].filter((x) => x !== id);
+    const clash = (x) => (isGroup(id) ? groupOf(x) === g && x !== id : x === g);
+    if (next !== 'none') {
+      sel.primary = sel.primary.filter((x) => !clash(x));
+      sel.secondary = sel.secondary.filter((x) => !clash(x));
     }
-    apply();
+    if (next === 'primary') {
+      sel.primary.push(id);
+      if (sel.primary.length > 2) sel.secondary.unshift(sel.primary.shift());
+    } else if (next === 'secondary') sel.secondary.push(id);
+    save();
   };
 
-  openSheet({
+  const stateBtn = (id) => {
+    const st = stateOf(id);
+    return h(`button.mstate.${st}`, { onclick: (e) => { e.stopPropagation(); cycle(id); sheet.refresh(); } }, LABEL[st]);
+  };
+
+  const sheet = openSheet({
     title: 'Muscles travaillés',
-    render: (api) => {
-      const list = sel[mode];
-      return [
-        segmented([{ value: 'primary', label: `Principal${sel.primary.length ? ` (${sel.primary.length})` : ''}` }, { value: 'secondary', label: `Secondaires${sel.secondary.length ? ` (${sel.secondary.length})` : ''}` }],
-          mode, (v) => { mode = v; api.refresh(); }),
-        h('p.small.muted', { style: { margin: '10px 2px 12px' } }, mode === 'primary'
-          ? 'Le muscle le plus sollicité (2 au maximum). Touche un groupe ; tu peux ensuite préciser la partie.'
-          : 'Les muscles qui aident. Optionnel.'),
-        h('div.muscle-groups', null, MUSCLE_TREE.filter((g) => g.id !== 'autre').map((g) => {
-          const groupOn = list.includes(g.id);
-          const partsOn = (g.parts || []).filter((p) => list.includes(p.id));
-          const open = groupOn || partsOn.length > 0;
-          const usedElsewhere = (mode === 'primary' ? sel.secondary : sel.primary).some((x) => groupOf(x) === g.id);
-          return h(`div.muscle-group${open ? '.open' : ''}`, null,
-            h(`button.chip${open ? '.on' : ''}${usedElsewhere && !open ? '.muted' : ''}`, {
-              onclick: () => { if (partsOn.length && !groupOn) { sel[mode] = list.filter((x) => groupOf(x) !== g.id); apply(); } else toggle(g.id); api.refresh(); },
-            }, g.label),
-            open && g.parts ? h('div.muscle-parts', null,
-              h('span.tiny.faint', null, 'Préciser :'),
-              g.parts.map((p) => h(`button.chip.sm${list.includes(p.id) ? '.on' : ''}`, { onclick: () => { toggle(p.id); api.refresh(); } }, p.label))) : null);
-        })),
-        h('div.sheet-actions', null, h('button.btn.primary.block.lg', { onclick: () => api.close() }, 'Terminé')),
-      ];
-    },
+    render: (api) => [
+      h('p.small.muted', { style: { margin: '0 2px 12px' } }, 'Touche le bouton à droite : Principal (le muscle le plus sollicité), puis Secondaire, puis rien.'),
+      shown.size ? h('div.list', null, MUSCLE_TREE.filter((g) => shown.has(g.id)).map((g) => [
+        h('div.list-row.mrow', null, h('div.grow.title', null, g.parts ? `${g.label} (tout)` : g.label), stateBtn(g.id)),
+        ...(g.parts || []).map((p) => h('div.list-row.mrow.part', null, h('div.grow', null, p.label), stateBtn(p.id))),
+      ])) : null,
+      adding
+        ? h('div', { style: { marginTop: '14px' } },
+          h('div.eyebrow', { style: { marginBottom: '8px' } }, 'Ajouter un muscle'),
+          h('div.chips', null, MUSCLE_TREE.filter((g) => g.id !== 'autre' && !shown.has(g.id)).map((g) => h('button.chip', {
+            onclick: () => { shown.add(g.id); if (!sel.primary.length) { sel.primary.push(g.id); save(); } adding = false; api.refresh(); },
+          }, g.label))))
+        : h('button.btn.ghost.block', { style: { marginTop: '12px' }, onclick: () => { adding = true; api.refresh(); } }, icon('plus', 'sm'), 'Autre muscle'),
+      h('div.sheet-actions', null, h('button.btn.primary.block.lg', { onclick: () => api.close() }, 'Terminé')),
+    ],
   });
 }
