@@ -188,11 +188,11 @@ input[type='date'].input { display: flex; align-items: center; }
 
 /* --------------------------------------------------------------- Toast -- */
 .toast-wrap {
+  /* En haut de l'écran : ne masque jamais les boutons du bas ni les feuilles. */
   position: fixed; left: 0; right: 0; z-index: 80; pointer-events: none;
-  bottom: calc(var(--sab) + var(--tabbar-h) + 14px);
+  top: calc(var(--sat) + var(--topbar-h) + 6px); /* sous la barre de titre (bouton retour libre) */
   display: flex; justify-content: center; padding: 0 16px;
 }
-body.no-tabs .toast-wrap { bottom: calc(var(--sab) + 96px); }
 .toast {
   pointer-events: auto;
   display: flex; align-items: center; gap: 12px;
@@ -204,7 +204,7 @@ body.no-tabs .toast-wrap { bottom: calc(var(--sab) + 96px); }
 }
 .toast .msg { flex: 1; }
 .toast .btn { min-height: 40px; }
-@keyframes toast-in { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes toast-in { from { transform: translateY(-12px); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* ------------------------------------------------------------- Bannière -- */
 .banner {

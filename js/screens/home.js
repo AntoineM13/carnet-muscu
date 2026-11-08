@@ -16,6 +16,7 @@ import { homeExtras } from './home-extras.js';
 import { openRunSheet } from './runs.js';
 import { fmtNum } from '../core/util.js';
 import { syncLabel, syncStatus } from '../core/sync.js';
+import { IS_TEST_ENV } from '../core/env.js';
 
 /** Sorties de course d'un jour (module optionnel). */
 const runsOn = (date) => (state.settings.runsEnabled ? state.runs.filter((r) => r.date === date) : []);
@@ -32,6 +33,7 @@ export function renderHome() {
     h('div.screen-head', null,
       h('div', null,
         h('div.eyebrow.row-flex', { style: { gap: '8px' } }, `Semaine ${weekKey(today).split('W')[1]}`,
+          IS_TEST_ENV ? h('span.env-tag', null, 'TEST') : null,
           syncStatus.user ? h(`button.sync-pill.st-${syncStatus.state}`, { onclick: () => go('/settings'), 'data-sync-label': '' }, syncLabel()) : null),
         h('h1', { style: { marginTop: '6px' } }, dateTitle)),
       h('button.icon-btn.boxed', { 'aria-label': 'Réglages', onclick: () => go('/settings') }, icon('settings'))),

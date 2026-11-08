@@ -102,7 +102,7 @@ let toastWrap = null;
 let toastTimer = null;
 let toastEl = null;
 
-function dismissToast() {
+export function dismissToast() {
   clearTimeout(toastTimer);
   toastEl?.remove();
   toastEl = null;

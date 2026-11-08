@@ -19,7 +19,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
   - la sauvegarde complète ;
   - le programme seul (séances, bibliothèque, planning par défaut), pour le partager sans écraser l'historique de l'autre. L'import fusionne les exercices par id et conserve les notes et marqueurs de douleur locaux.
 - Hébergement : GitHub Pages, dépôt `antoinem13/carnet-muscu`, branche `master` (= production, utilisée par les 3 amis).
-- Environnement de test : dépôt `antoinem13/carnet-muscu-test` (GitHub Pages), pour tester sur téléphone sans toucher la production. Même domaine que la production, donc isolation explicite (`js/core/env.js`) : base IndexedDB `carnet-muscu-test`, préfixe de cache `cm-test-`, repère « TEST » à l'écran.
+- Environnement de test : dépôt `antoinem13/carnet-muscu-test` (GitHub Pages), pour tester sur téléphone sans toucher la production. Même domaine que la production, donc isolation explicite (`js/core/env.js`) : base IndexedDB `carnet-muscu-test`, préfixe de cache `cm-test-`, étiquette « TEST » dans l'en-tête de l'accueil (pas de pastille flottante : elle brouillait l'en-tête sur iPhone).
 
 ## 2b. Synchronisation en ligne (Supabase)
 - **Local d'abord** : IndexedDB reste la source de vérité de l'appareil. L'app marche sans réseau ; la synchro se fait en arrière-plan (au démarrage, 3 s après une modification, au retour du réseau ou dans l'app, toutes les 15 s tant que l'app est visible).
@@ -76,7 +76,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - En cours de séance, on peut réordonner, sauter ou reprendre, ajouter, retirer, grouper ou dégrouper en superset, ajouter ou supprimer des séries, et changer la date.
 - **Remplacer un exercice** : « Juste aujourd'hui » ou « Définitivement ». Si des séries sont déjà validées, elles restent attachées à l'exercice d'origine, et le remplaçant prend la suite sur le même écran, dans le même « couloir » du superset.
 - **Superset** : les séries s'alternent (A1, B1, A2…) et le repos se lance après le tour complet (réglable).
-- Les messages « Annuler » ne bloquent jamais l'écran : toucher ailleurs ou ouvrir une feuille les ferme.
+- Les messages « Annuler » s'affichent **en haut**, sous la barre de titre (jamais sur les boutons du bas ni sur les feuilles) ; toucher ailleurs, ouvrir une feuille ou changer d'écran les ferme.
 - Tout reste modifiable jusqu'à la fin de la séance. Après coup, on corrige depuis l'historique, avec un marquage « modifiée après coup ».
 - La séance reprend automatiquement si on quitte l'app.
 - Résumé de fin : durée, volume, records battus, et une note de séance (sommeil, fatigue, douleur, humeur de 1 à 5, plus un texte libre).
@@ -147,3 +147,4 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-11-08 : retours salle (1) : chrono de repos désactivable ; le message « Annuler » ne masque plus la feuille suivante (suppressions enchaînées) ; suggestion de charge basée sur la même séance (force et volume du même exercice ne se mélangent plus).
 - 2026-11-08 : onglet « Progrès » à la place de « Objectifs » (choix d'Antoine : courbes par exercice, tableau par séance, résumé de la semaine ; pas d'alertes de stagnation pour l'instant). Suivi séance par séance pour ne pas mélanger force et volume.
 - 2026-11-08 : banque d'exercices : choix « intégrée + ajouts partagés » (banque FR/EN rédigée dans l'app, plus une table Supabase commune pour les ajouts des 3 utilisateurs).
+- 2026-11-08 : message « Annuler » déplacé en haut de l'écran (retour d'Antoine : il survolait le bas) ; repère TEST intégré à l'en-tête (la pastille fixe rendait l'en-tête flou).

@@ -5,7 +5,7 @@ import { loadAll, state, subscribe, setErrorHandler } from './core/store.js';
 import { route, startRouter, resolve, currentPath, go } from './core/router.js';
 import { mount } from './core/h.js';
 import { tabbar } from './ui/components.js';
-import { toast, closeAllSheets } from './ui/overlay.js';
+import { toast, closeAllSheets, dismissToast } from './ui/overlay.js';
 import { keepAwake } from './ui/device.js';
 import { registerModules } from './modules.js';
 import { initSync, onSyncStatus, syncLabel, syncStatus } from './core/sync.js';
@@ -55,7 +55,7 @@ function render({ navigated = false } = {}) {
   }
   const r = resolve(path);
   if (!r) { go('/', { replace: true }); return; }
-  if (navigated && path !== lastPath) closeAllSheets();
+  if (navigated && path !== lastPath) { closeAllSheets(); dismissToast(); }
   const y = navigated && path !== lastPath ? 0 : window.scrollY;
   lastPath = path;
   let out;
@@ -74,7 +74,7 @@ function render({ navigated = false } = {}) {
 }
 
 async function boot() {
-  if (IS_TEST_ENV) { document.body.classList.add('env-test'); document.title = 'TEST · ' + document.title; }
+  if (IS_TEST_ENV) document.title = 'TEST · ' + document.title;
   setErrorHandler((e) => { console.error(e); toast('Échec de l’enregistrement : ' + (e?.message || e)); });
   try {
     await loadAll();

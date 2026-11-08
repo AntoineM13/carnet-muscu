@@ -3,3 +3,6 @@ node_modules/
 *.log
 .github-token*
 historique-git.bundle
+# Exports de données personnelles : ne jamais les versionner
+carnet-muscu-sauvegarde-*.json
+carnet-muscu-programme-*.json
