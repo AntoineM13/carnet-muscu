@@ -13,8 +13,8 @@ But : tester la version synchronisée sur iPhone et Android, en HTTPS, sans touc
 - [x] Y publier le contenu de la branche `sync-supabase` (branche `main` du dépôt de test). Le dépôt de production n'est pas modifié.
 - [x] Activer GitHub Pages sur ce dépôt (branche `main`, dossier racine), via `gh api` si possible, sinon guider Antoine (Settings → Pages).
 - [x] Vérifier que `https://antoinem13.github.io/carnet-muscu-test/` répond et que l'app se charge.
-- [ ] Dans Supabase (Antoine, guidé) : Authentication → URL Configuration → ajouter `https://antoinem13.github.io/carnet-muscu-test/` aux **Redirect URLs**.
-- [ ] Donner à Antoine la checklist téléphone :
+- [x] Dans Supabase (Antoine, guidé) : Authentication → URL Configuration → ajouter `https://antoinem13.github.io/carnet-muscu-test/` aux **Redirect URLs**. (Facultatif tant que « Confirm email » reste désactivé : aucun lien e-mail n'est utilisé.)
+- [x] Donner à Antoine la checklist téléphone :
   1. Ouvrir l'adresse de test. Installer l'app sur l'écran d'accueil (iPhone : Safari → Partager → Sur l'écran d'accueil ; Android : Chrome → Installer l'application).
   2. Se connecter avec un **compte de test** (ex. `antoine+test@…`, le « + » crée une adresse distincte qui arrive dans la même boîte mail).
   3. Faire une mini-séance, couper le réseau (mode avion), modifier quelque chose, remettre le réseau : vérifier que « en attente » repasse à « Synchronisé ».
@@ -22,6 +22,8 @@ But : tester la version synchronisée sur iPhone et Android, en HTTPS, sans touc
   5. Si possible, faire le même test sur le téléphone Android de l'ami.
 
 ✅ Critère de validation : Antoine confirme que tout fonctionne sur iPhone (et Android si possible).
+
+**Étape 1 validée le 2026-11-08** (iPhone + Mac). Android : à tester par l'ami quand possible.
 
 ## Étape 2 : intégrer les retours de la salle
 Antoine a des retours d'usage à transmettre. Les traiter **sur la branche `sync-supabase`**, les republier sur l'environnement de test, et les faire valider avant la production. On ne publie qu'une seule fois en production (une seule sauvegarde demandée aux amis).
