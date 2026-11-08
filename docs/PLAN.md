@@ -9,10 +9,10 @@ Coche les cases au fur et à mesure (et ajoute une ligne au journal de `docs/SPE
 ## Étape 1 : environnement de test sur téléphone
 But : tester la version synchronisée sur iPhone et Android, en HTTPS, sans toucher la production.
 
-- [ ] Créer le dépôt public `antoinem13/carnet-muscu-test` (avec `gh repo create` si `gh` est installé et connecté ; sinon guider Antoine pour le créer vide sur github.com, en 1 minute).
-- [ ] Y publier le contenu de la branche `sync-supabase` (branche `main` du dépôt de test). Le dépôt de production n'est pas modifié.
-- [ ] Activer GitHub Pages sur ce dépôt (branche `main`, dossier racine), via `gh api` si possible, sinon guider Antoine (Settings → Pages).
-- [ ] Vérifier que `https://antoinem13.github.io/carnet-muscu-test/` répond et que l'app se charge.
+- [x] Créer le dépôt public `antoinem13/carnet-muscu-test` (avec `gh repo create` si `gh` est installé et connecté ; sinon guider Antoine pour le créer vide sur github.com, en 1 minute).
+- [x] Y publier le contenu de la branche `sync-supabase` (branche `main` du dépôt de test). Le dépôt de production n'est pas modifié.
+- [x] Activer GitHub Pages sur ce dépôt (branche `main`, dossier racine), via `gh api` si possible, sinon guider Antoine (Settings → Pages).
+- [x] Vérifier que `https://antoinem13.github.io/carnet-muscu-test/` répond et que l'app se charge.
 - [ ] Dans Supabase (Antoine, guidé) : Authentication → URL Configuration → ajouter `https://antoinem13.github.io/carnet-muscu-test/` aux **Redirect URLs**.
 - [ ] Donner à Antoine la checklist téléphone :
   1. Ouvrir l'adresse de test. Installer l'app sur l'écran d'accueil (iPhone : Safari → Partager → Sur l'écran d'accueil ; Android : Chrome → Installer l'application).

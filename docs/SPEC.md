@@ -132,3 +132,4 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-11-08 : synchronisation « local d'abord » développée sur la branche `sync-supabase`, validée par Antoine sur son Mac contre le vrai Supabase (création de compte, envoi, téléphone neuf, synchro dans les deux sens, mauvais mot de passe).
 - 2026-11-08 : règle de publication : **rien n'est publié sur `master` tant que ce n'est pas stable et validé par Antoine**. Avant chaque publication qui touche aux données, les 3 utilisateurs font un export de sauvegarde.
 - 2026-11-08 : la version de test utilise sa propre base locale et son propre cache, car elle partage le domaine `antoinem13.github.io` avec la production : sinon elle aurait modifié les vraies données du téléphone.
+- 2026-11-08 : environnement de test en ligne : dépôt `antoinem13/carnet-muscu-test`, GitHub Pages sur `main` (= branche `sync-supabase`), remote Git local `test`.
