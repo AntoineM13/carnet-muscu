@@ -6,7 +6,7 @@
  * (sinon les téléphones garderont l'ancienne version en cache).
  * `node tools/check-sw.mjs` vérifie que la liste ASSETS est complète.
  */
-const VERSION = 'v1.2.0';
+const VERSION = 'v1.3.0-sync';
 const CACHE = `carnet-muscu-${VERSION}`;
 
 const ASSETS = [
@@ -30,10 +30,14 @@ const ASSETS = [
   './js/core/h.js',
   './js/core/router.js',
   './js/core/store.js',
+  './js/core/supabase.js',
+  './js/core/sync-engine.js',
+  './js/core/sync.js',
   './js/core/util.js',
   './js/data/defaults.js',
   './js/data/run-plans.js',
   './js/data/seed-program.js',
+  './js/data/sync-config.js',
   './js/domain/backup.js',
   './js/domain/goals.js',
   './js/domain/planning.js',
@@ -49,6 +53,7 @@ const ASSETS = [
   './js/ui/overlay.js',
   './js/ui/pickers.js',
   './js/ui/planning-ui.js',
+  './js/screens/account.js',
   './js/screens/exercise-progress.js',
   './js/screens/goals.js',
   './js/screens/history-extras.js',

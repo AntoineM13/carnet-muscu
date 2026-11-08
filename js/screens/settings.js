@@ -10,6 +10,8 @@ import { icon } from '../ui/icons.js';
 import { topbar, switchRow, stepper } from '../ui/components.js';
 import { go, rerender } from '../core/router.js';
 import { confirmAction, toast, choose } from '../ui/overlay.js';
+import { accountCard } from './account.js';
+import { syncStatus, signOut } from '../core/sync.js';
 
 const ALL_PLATES = [25, 20, 15, 10, 5, 2.5, 2, 1.25, 1, 0.5];
 
@@ -20,6 +22,8 @@ export function renderSettings({ backup } = {}) {
 
   const node = h('main.screen.no-tabs', null,
     topbar('Réglages', { backTo: '/' }),
+
+    accountCard() && group('Compte et synchronisation', '', accountCard()),
 
     group('Sauvegarde', backup ? 'backup-focus' : '',
       h('div.card.stack', null,
@@ -80,11 +84,13 @@ export function renderSettings({ backup } = {}) {
         onclick: async () => {
           const ok = await confirmAction({ title: 'Tout effacer ?', message: 'Programme, historique, objectifs et réglages seront supprimés de ce téléphone. Exporte une sauvegarde avant.', confirmLabel: 'Tout effacer' });
           if (!ok) return;
+          // Déconnexion d'abord : l'effacement local ne doit pas toucher le compte en ligne.
+          if (syncStatus.user) await signOut();
           await replaceEverything({ meta: { onboarded: false, activeSessionId: null } });
           go('/onboarding');
         },
       }, icon('trash', 'sm'), 'Effacer toutes les données')),
-    h('p.tiny.faint.center', { style: { marginTop: '24px' } }, 'Carnet de muscu · données stockées uniquement sur cet appareil'));
+    h('p.tiny.faint.center', { style: { marginTop: '24px' } }, syncStatus.user ? 'Carnet de muscu · données sur cet appareil et sur ton compte' : 'Carnet de muscu · données stockées uniquement sur cet appareil'));
 
   if (backup) requestAnimationFrame(() => document.querySelector('.backup-focus')?.scrollIntoView({ block: 'start' }));
   return { node, tab: null };

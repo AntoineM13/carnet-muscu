@@ -8,6 +8,7 @@ import { tabbar } from './ui/components.js';
 import { toast, closeAllSheets } from './ui/overlay.js';
 import { keepAwake } from './ui/device.js';
 import { registerModules } from './modules.js';
+import { initSync, onSyncStatus, syncLabel, syncStatus } from './core/sync.js';
 
 import { renderHome } from './screens/home.js';
 import { renderProgram, renderSchedule } from './screens/program.js';
@@ -81,6 +82,14 @@ async function boot() {
   // Demande au navigateur de ne pas effacer les données (best effort).
   try { await navigator.storage?.persist?.(); } catch { /* ignoré */ }
   registerModules();
+  await initSync();
+  // Libellés « Synchronisé il y a… » mis à jour sans redessiner l'écran.
+  onSyncStatus(() => {
+    for (const el of document.querySelectorAll('[data-sync-label]')) {
+      el.textContent = syncLabel() || '';
+      el.className = el.className.replace(/\bst-\w+/, `st-${syncStatus.state}`);
+    }
+  });
   subscribe(() => render());
   startRouter(render);
   registerServiceWorker();

@@ -265,3 +265,13 @@ details.archived summary { list-style: none; cursor: pointer; }
 .plan-session { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; }
 .plan-session .slot-letter { margin-top: 1px; }
 .run-card .lead { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+
+/* Synchronisation */
+.sync-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; color: var(--text-3); background: var(--surface); border: 1px solid var(--border); }
+.sync-pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.sync-pill.st-syncing::before { animation: sync-blink 1s ease infinite; }
+.sync-pill.st-offline::before { background: var(--text-3); }
+.sync-pill.st-error::before { background: var(--warn); }
+@keyframes sync-blink { 50% { opacity: 0.2; } }
+.sync-lead { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+form.card .lead { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--surface-3); }

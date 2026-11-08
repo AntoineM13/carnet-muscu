@@ -15,6 +15,7 @@ import { openDaySheet, openStartPicker, startPlanned, tplName, itemStatusLabel, 
 import { homeExtras } from './home-extras.js';
 import { openRunSheet } from './runs.js';
 import { fmtNum } from '../core/util.js';
+import { syncLabel, syncStatus } from '../core/sync.js';
 
 /** Sorties de course d'un jour (module optionnel). */
 const runsOn = (date) => (state.settings.runsEnabled ? state.runs.filter((r) => r.date === date) : []);
@@ -30,7 +31,8 @@ export function renderHome() {
   const node = h('main.screen', null,
     h('div.screen-head', null,
       h('div', null,
-        h('div.eyebrow', null, `Semaine ${weekKey(today).split('W')[1]}`),
+        h('div.eyebrow.row-flex', { style: { gap: '8px' } }, `Semaine ${weekKey(today).split('W')[1]}`,
+          syncStatus.user ? h(`button.sync-pill.st-${syncStatus.state}`, { onclick: () => go('/settings'), 'data-sync-label': '' }, syncLabel()) : null),
         h('h1', { style: { marginTop: '6px' } }, dateTitle)),
       h('button.icon-btn.boxed', { 'aria-label': 'Réglages', onclick: () => go('/settings') }, icon('settings'))),
     heroCard(today),
@@ -132,6 +134,8 @@ function lateBanner(today) {
 function backupBanner() {
   const done = state.sessions.filter((s) => s.status === 'done').length;
   if (done < 1) return null;
+  // Compte connecté et synchronisé récemment : la sauvegarde en ligne remplace l'export.
+  if (syncStatus.user && syncStatus.lastSync && daysBetween(syncStatus.lastSync.slice(0, 10), todayISO()) < 7) return null;
   const last = state.settings.lastExportAt;
   const days = last ? daysBetween(last.slice(0, 10), todayISO()) : Infinity;
   if (days < (state.settings.exportReminderDays || 7)) return null;

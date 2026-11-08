@@ -30,6 +30,15 @@ export function notify() { for (const fn of listeners) fn(); }
 let onError = (e) => console.error(e);
 export function setErrorHandler(fn) { onError = fn; }
 
+/**
+ * Crochet appelé à chaque modification LOCALE d'un document (utilisé par la
+ * synchronisation pour savoir quoi envoyer). Signature : (collection, id).
+ * Les réglages et le planning sont vus comme la collection 'kv'.
+ */
+let changeHook = null;
+export function setChangeHook(fn) { changeHook = fn; }
+const changed = (collection, id) => { try { changeHook?.(collection, id); } catch (e) { console.error(e); } };
+
 /** Chargement initial depuis IndexedDB. */
 export async function loadAll() {
   const [settings, meta, schedule] = await Promise.all([
@@ -74,6 +83,7 @@ export function saveDoc(collection, doc, { silent = false } = {}) {
   if (i >= 0) arr[i] = doc; else arr.push(doc);
   if (collection === 'templates') sortTemplates();
   persist(db.put(collection, clone(doc)));
+  changed(collection, doc.id);
   if (!silent) notify();
   return doc;
 }
@@ -81,12 +91,14 @@ export function saveDoc(collection, doc, { silent = false } = {}) {
 export function deleteDoc(collection, id, { silent = false } = {}) {
   state[collection] = state[collection].filter((d) => d.id !== id);
   persist(db.delete(collection, id));
+  changed(collection, id);
   if (!silent) notify();
 }
 
 export function saveSettings(patch) {
   state.settings = { ...state.settings, ...patch };
   persist(db.put('kv', { key: 'settings', value: clone(state.settings) }));
+  changed('kv', 'settings');
   notify();
 }
 
@@ -97,6 +109,7 @@ export function saveMeta(patch) {
 
 export function saveSchedule(silent = false) {
   persist(db.put('kv', { key: 'schedule', value: clone(state.schedule) }));
+  changed('kv', 'schedule');
   if (!silent) notify();
 }
 
@@ -111,7 +124,56 @@ export async function replaceEverything(data) {
   for (const name of COLLECTIONS) {
     state[name] = clone(data[name] || []);
     await db.replaceAll(name, state[name]);
+    for (const d of state[name]) changed(name, d.id);
   }
+  changed('kv', 'settings');
+  changed('kv', 'schedule');
   sortTemplates();
   notify();
+}
+
+/* ------------------------------------------- Accès pour la synchronisation -- */
+
+/** Collections synchronisées (meta reste propre à l'appareil). */
+export const SYNC_COLLECTIONS = [...COLLECTIONS, 'kv'];
+const KV_KEYS = ['settings', 'schedule'];
+
+/** Lit un document local (undefined s'il n'existe pas). */
+export function getLocalDoc(collection, id) {
+  if (collection === 'kv') return KV_KEYS.includes(id) ? clone(state[id]) : undefined;
+  const d = state[collection]?.find((x) => x.id === id);
+  return d ? clone(d) : undefined;
+}
+
+/** Toutes les clés locales [collection, id]. */
+export function listLocalKeys() {
+  const keys = KV_KEYS.map((k) => ['kv', k]);
+  for (const name of COLLECTIONS) for (const d of state[name]) keys.push([name, d.id]);
+  return keys;
+}
+
+/**
+ * Applique un document venant du serveur, SANS déclencher le crochet de
+ * synchronisation. data = null pour une suppression.
+ */
+export function applyRemoteDoc(collection, id, data) {
+  if (collection === 'kv') {
+    if (!KV_KEYS.includes(id) || data == null) return;
+    if (id === 'settings') state.settings = { ...DEFAULT_SETTINGS, ...data };
+    else state.schedule = { default: {}, weeks: {}, ...data };
+    persist(db.put('kv', { key: id, value: clone(state[id]) }));
+    return;
+  }
+  if (!COLLECTIONS.includes(collection)) return;
+  const arr = state[collection];
+  const i = arr.findIndex((d) => d.id === id);
+  if (data == null) {
+    if (i >= 0) arr.splice(i, 1);
+    persist(db.delete(collection, id));
+  } else {
+    const doc = { ...data, id };
+    if (i >= 0) arr[i] = doc; else arr.push(doc);
+    persist(db.put(collection, clone(doc)));
+  }
+  if (collection === 'templates') sortTemplates();
 }

@@ -12,6 +12,7 @@ import { icon } from '../ui/icons.js';
 import { go } from '../core/router.js';
 import { toast } from '../ui/overlay.js';
 import { applyProgram } from './settings.js';
+import { accountCard } from './account.js';
 
 export function renderOnboarding() {
   if (state.meta.onboarded) { go('/', { replace: true }); return { node: h('div'), tab: null }; }
@@ -45,6 +46,7 @@ export function renderOnboarding() {
           } catch (err) { toast(err.message); }
         },
       })),
+    accountCard({ onboarding: true }) && h('div', { style: { marginTop: '20px' } }, accountCard({ onboarding: true })),
     h('p.tiny.faint', { style: { marginTop: '24px' } }, 'Conseil : ajoute l’app à l’écran d’accueil (Partager → Sur l’écran d’accueil) pour l’utiliser en plein écran et hors-ligne.'));
   return { node, tab: null };
 }
