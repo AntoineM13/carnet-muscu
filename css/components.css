@@ -240,3 +240,14 @@ body.no-tabs .toast-wrap { bottom: calc(var(--sab) + 96px); }
 .pain-box svg.icon { flex: none; }
 
 .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* Graphique multi-courbes : une courbe par séance (accent, puis gris). */
+.chart .line.s1 { stroke: var(--text-2); stroke-dasharray: 6 4; stroke-width: 1.8; }
+.chart .line.s2 { stroke: var(--text-3); stroke-dasharray: 2 4; stroke-width: 1.8; }
+.chart .dot.s1 { stroke: var(--text-2); }
+.chart .dot.s2 { stroke: var(--text-3); }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 4px 8px 6px; font-size: 12px; color: var(--text-2); }
+.chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart-legend .sw { display: inline-block; width: 18px; height: 0; border-top: 2px solid var(--accent); }
+.chart-legend .sw.s1 { border-top: 2px dashed var(--text-2); }
+.chart-legend .sw.s2 { border-top: 2px dotted var(--text-3); }

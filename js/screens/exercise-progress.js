@@ -5,9 +5,10 @@
 import { h } from '../core/h.js';
 import { state } from '../core/store.js';
 import { fmtNum, fmtInt, fmtDateShort } from '../core/util.js';
-import { exerciseHistory, personalRecords, e1rm } from '../domain/stats.js';
+import { personalRecords, e1rm } from '../domain/stats.js';
 import { goalProgress } from '../domain/goals.js';
-import { lineChart, segmented } from '../ui/components.js';
+import { multiLineChart, segmented } from '../ui/components.js';
+import { exerciseSeriesByTemplate } from '../domain/dashboard.js';
 import { icon } from '../ui/icons.js';
 import { rerender } from '../core/router.js';
 import { goalCard, createGoal } from './goals.js';
@@ -19,19 +20,31 @@ const METRICS = [
   { value: 'volume', label: 'Volume' },
 ];
 
-export function exerciseProgressSection(e) {
-  const hist = exerciseHistory(e.id, state.sessions);
-  const pr = personalRecords(e.id, state.sessions);
+/**
+ * Graphique de progression d'un exercice : une courbe par séance modèle
+ * (force et volume ne se mélangent pas), métrique au choix.
+ */
+export function exerciseChart(e) {
   const goals = state.goals.filter((g) => g.exerciseId === e.id);
-  const points = hist.slice(-24).map((x) => ({
-    x: fmtDateShort(x.date),
-    y: metric === 'load' ? x.stats.topLoad : metric === 'e1rm' ? x.stats.bestE1RM : x.stats.volume,
-  })).filter((p) => p.y != null);
+  const series = exerciseSeriesByTemplate(e.id, state.sessions, metric);
   // Ligne d'objectif sur le graphique (premier objectif de l'exercice).
   const g0 = goals[0];
   let goalLine = null;
   if (g0 && metric === 'e1rm') goalLine = g0.kind === 'e1rm' ? g0.target1RM : e1rm(g0.load, g0.reps);
   if (g0 && metric === 'load' && g0.kind === 'charge_reps') goalLine = g0.load;
+  const hasPoints = series.some((s) => s.points.length);
+  return h('div', null,
+    segmented(METRICS, metric, (v) => { metric = v; rerender(); }),
+    h('div.card', { style: { marginTop: '10px', padding: '12px 8px 6px' } },
+      hasPoints ? multiLineChart(series, { target: goalLine, fmtX: fmtDateShort, fmtY: (v) => (metric === 'volume' ? fmtInt(v) : fmtNum(v, 1)) })
+        : h('p.muted.small.center', { style: { padding: '28px 0' } }, 'Le graphique apparaîtra après ta première séance.'),
+      goalLine != null && hasPoints ? h('p.tiny.faint', { style: { padding: '0 8px 6px' } }, 'Pointillés horizontaux : objectif') : null,
+      series.length > 1 ? h('p.tiny.faint', { style: { padding: '0 8px 6px' } }, 'Une courbe par séance : la force et le volume ne se mélangent pas. Le 1RM estimé permet de les comparer.') : null));
+}
+
+export function exerciseProgressSection(e) {
+  const pr = personalRecords(e.id, state.sessions);
+  const goals = state.goals.filter((g) => g.exerciseId === e.id);
 
   return [
     h('section.section', null,
@@ -42,11 +55,7 @@ export function exerciseProgressSection(e) {
         recCell('Volume', pr.bestVolume && fmtInt(pr.bestVolume.value), pr.bestVolume && fmtDateShort(pr.bestVolume.date)))),
     h('section.section', null,
       h('div.section-head', null, h('h2', null, 'Progression')),
-      segmented(METRICS, metric, (v) => { metric = v; rerender(); }),
-      h('div.card', { style: { marginTop: '10px', padding: '12px 8px 6px' } },
-        points.length >= 1 ? lineChart(points, { target: goalLine, fmtY: (v) => (metric === 'volume' ? fmtInt(v) : fmtNum(v, 1)) })
-          : h('p.muted.small.center', { style: { padding: '28px 0' } }, 'Le graphique apparaîtra après ta première séance.'),
-        goalLine != null && points.length ? h('p.tiny.faint', { style: { padding: '0 8px 6px' } }, 'Pointillés : objectif') : null)),
+      exerciseChart(e)),
     h('section.section', null,
       h('div.section-head', null, h('h2', null, 'Objectifs'),
         h('button.link', { onclick: () => createGoal(e.id) }, 'Ajouter')),

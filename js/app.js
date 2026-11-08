@@ -20,7 +20,7 @@ import { renderSession } from './screens/session.js';
 import { renderSummary } from './screens/summary.js';
 import { renderSettings } from './screens/settings.js';
 import { renderOnboarding } from './screens/onboarding.js';
-import { renderGoals } from './screens/goals.js';
+import { renderProgress } from './screens/progress.js';
 import { renderRuns } from './screens/runs.js';
 
 const app = document.getElementById('app');
@@ -38,7 +38,8 @@ route('/session', renderSession);
 route('/session/:id', renderSession);
 route('/summary/:id', renderSummary);
 route('/settings', renderSettings);
-route('/goals', renderGoals);
+route('/progress', renderProgress);
+route('/goals', renderProgress); // ancienne adresse de l'onglet Objectifs
 route('/runs', renderRuns);
 
 let booted = false;

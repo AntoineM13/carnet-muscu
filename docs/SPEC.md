@@ -37,7 +37,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 ## 3. Design
 - Thème sombre, une seule couleur d'accent (vert citron #C8F169), fonds gris très foncés, cartes arrondies, bordures fines.
 - Chiffres tabulaires pour les charges, les reps et le chrono. Icônes SVG à trait fin, pas d'emojis.
-- Barre d'onglets en bas : Accueil, Programme, Historique, Objectifs. Pas de barre d'onglets pendant une séance.
+- Barre d'onglets en bas : Accueil, Programme, Historique, Progrès (l'ancien onglet Objectifs, adresse `#/goals` conservée). Pas de barre d'onglets pendant une séance.
 - Zones tactiles d'au moins 44 px. Confirmation uniquement pour les actions destructrices, toujours avec un « Annuler » de quelques secondes.
 - Principes UX :
   - valider une série en moins de 2 taps ;
@@ -98,9 +98,15 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - Les suggestions préremplissent les séries et restent indicatives. Les échauffements et les paliers de dégressive sont ignorés.
 - **Référence = même contexte** : un exercice peut être fait en force dans une séance et en volume dans une autre (ex. développé décliné barre). La suggestion se base sur la dernière fois dans la **même séance modèle**, sinon avec la **même plage de reps**, sinon la dernière fois tout court.
 
-### Objectifs et stats
+### Progrès (dashboard), objectifs et stats
+- Onglet **Progrès** (`js/screens/progress.js`, calculs purs dans `js/domain/dashboard.js`) :
+  - **Cette semaine** : séances, volume (comparé à la semaine dernière au même stade), records battus (une ligne par exercice) ;
+  - **Par séance** : pour la séance choisie, chaque exercice avec sa dernière charge × reps et l'évolution sur 4 semaines (calculée sur le 1RM estimé, affichée en kg) ;
+  - **Courbe** : un exercice au choix ; toucher une ligne du tableau l'affiche ;
+  - **Objectifs** en bas de l'onglet.
+- **Cohérence force / volume** : tendances et courbes sont calculées **séance par séance** (une courbe par séance modèle, la plus fréquente en couleur d'accent, les autres en gris tirets). Le 1RM estimé permet de comparer les deux.
 - Records : charge max, meilleur 1RM estimé (Epley), meilleur volume.
-- Graphique par exercice : charge max, 1RM estimé ou volume.
+- Graphique par exercice (onglet Progrès et fiche exercice) : charge max, 1RM estimé ou volume, une courbe par séance.
 - Objectifs de type charge × reps ou 1RM estimé, avec date cible optionnelle. Affichage : barre d'avancement, valeur actuelle et écart restant.
 
 ### Course à pied (module optionnel, désactivable)
@@ -139,3 +145,5 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-11-08 : « Confirm email » reste désactivé en production : l'e-mail intégré de Supabase (gratuit) est limité à 2 envois/heure et ne livre qu'aux membres de l'équipe Supabase, les amis ne pourraient pas confirmer. Mot de passe oublié : suppression du compte, puis recréation.
 - 2026-11-08 : étape 1 validée par Antoine sur iPhone et Mac : synchro automatique dans les deux sens sur l'environnement de test.
 - 2026-11-08 : retours salle (1) : chrono de repos désactivable ; le message « Annuler » ne masque plus la feuille suivante (suppressions enchaînées) ; suggestion de charge basée sur la même séance (force et volume du même exercice ne se mélangent plus).
+- 2026-11-08 : onglet « Progrès » à la place de « Objectifs » (choix d'Antoine : courbes par exercice, tableau par séance, résumé de la semaine ; pas d'alertes de stagnation pour l'instant). Suivi séance par séance pour ne pas mélanger force et volume.
+- 2026-11-08 : banque d'exercices : choix « intégrée + ajouts partagés » (banque FR/EN rédigée dans l'app, plus une table Supabase commune pour les ajouts des 3 utilisateurs).

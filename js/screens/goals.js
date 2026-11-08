@@ -11,14 +11,16 @@ import { go, rerender } from '../core/router.js';
 import { openSheet, toast } from '../ui/overlay.js';
 import { pickExercise } from '../ui/pickers.js';
 
-export function renderGoals() {
+/** Section « Objectifs » de l'onglet Progrès. */
+export function goalsSection() {
   const items = state.goals.map((g) => ({ g, p: goalProgress(g, state.sessions, fmtNum) }));
   syncAchieved(items);
   const active = items.filter((x) => !x.p.achieved).sort((a, b) => (a.g.deadline || '9').localeCompare(b.g.deadline || '9'));
   const done = items.filter((x) => x.p.achieved);
-  const node = h('main.screen', null,
-    screenHead('Objectifs', items.length ? `${active.length} en cours · ${done.length} atteint${done.length > 1 ? 's' : ''}` : null,
-      h('button.icon-btn.boxed.accent', { 'aria-label': 'Nouvel objectif', onclick: () => createGoal() }, icon('plus'))),
+  return h('section.section', null,
+    h('div.section-head', null,
+      h('h2', null, 'Objectifs', items.length ? h('span.small.faint', null, `  ${active.length} en cours · ${done.length} atteint${done.length > 1 ? 's' : ''}`) : null),
+      h('button.link', { onclick: () => createGoal() }, 'Ajouter')),
     items.length
       ? [
         active.length ? h('div.stack', null, active.map(goalCard)) : h('p.muted', null, 'Tous tes objectifs sont atteints.'),
@@ -26,7 +28,6 @@ export function renderGoals() {
       ]
       : emptyState('target', 'Fixe un objectif sur un exercice : une charge × reps (ex. 30 kg × 8) ou un 1RM estimé.',
         h('button.btn.primary', { onclick: () => createGoal() }, icon('plus', 'sm'), 'Nouvel objectif')));
-  return { node, tab: 'goals' };
 }
 
 /** Enregistre la date d'atteinte la première fois (et l'efface si l'historique a été corrigé). */

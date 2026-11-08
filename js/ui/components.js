@@ -107,7 +107,7 @@ export function tabbar(active) {
     { id: 'home', href: '#/', label: 'Accueil', ic: 'home' },
     { id: 'program', href: '#/program', label: 'Programme', ic: 'program' },
     { id: 'history', href: '#/history', label: 'Historique', ic: 'history' },
-    { id: 'goals', href: '#/goals', label: 'Objectifs', ic: 'target' },
+    { id: 'goals', href: '#/progress', label: 'Progrès', ic: 'chart' },
   ];
   return h('nav.tabbar', { 'aria-label': 'Navigation principale' },
     tabs.map((t) => h(`a${t.id === active ? '.on' : ''}`, { href: t.href }, icon(t.ic), t.label)));
@@ -140,4 +140,43 @@ export function lineChart(points, { height = 170, target = null, fmtY = (v) => f
       ${[...new Set(labelIdx)].map((i) => `<text class="axis" x="${x(i)}" y="${H - 6}" text-anchor="${i === 0 && points.length > 1 ? 'start' : i === points.length - 1 && points.length > 1 ? 'end' : 'middle'}">${points[i].x}</text>`).join('')}
     </svg>`;
   return h('div', { html: svg });
+}
+
+/**
+ * Graphique à plusieurs courbes sur un axe de dates (une courbe par séance).
+ * series: [{ name, points: [{ date: 'AAAA-MM-JJ', value }] }]
+ * La 1re courbe est en couleur d'accent, les suivantes en gris (tirets, pointillés).
+ */
+export function multiLineChart(series, { height = 180, target = null, fmtY = (v) => fmtNum(v, 1), fmtX = (d) => d } = {}) {
+  const W = 340; const H = height; const padL = 36; const padR = 10; const padT = 12; const padB = 24;
+  const all = series.flatMap((s) => s.points);
+  if (!all.length) return h('div.empty.small', null, 'Pas encore de données.');
+  const t = (d) => new Date(`${d}T12:00:00`).getTime();
+  let x0 = Math.min(...all.map((p) => t(p.date))); let x1 = Math.max(...all.map((p) => t(p.date)));
+  if (x0 === x1) { x0 -= 86400000 * 3; x1 += 86400000 * 3; }
+  const ys = all.map((p) => p.value).concat(target != null ? [target] : []);
+  let min = Math.min(...ys); let max = Math.max(...ys);
+  if (min === max) { min -= 1; max += 1; }
+  const span = max - min; min -= span * 0.1; max += span * 0.1;
+  const x = (d) => padL + ((t(d) - x0) / (x1 - x0)) * (W - padL - padR);
+  const y = (v) => padT + (1 - (v - min) / (max - min)) * (H - padT - padB);
+  const ticks = [max - (max - min) * 0.1, (max + min) / 2, min + (max - min) * 0.1];
+  const dates = [...new Set(all.map((p) => p.date))].sort();
+  const labels = dates.length === 1 ? [dates[0]] : [dates[0], dates[dates.length - 1]];
+  const lines = series.map((s, k) => {
+    const cls = `s${Math.min(k, 2)}`;
+    const path = s.points.map((p, i) => `${i ? 'L' : 'M'}${x(p.date).toFixed(1)},${y(p.value).toFixed(1)}`).join(' ');
+    return `<path class="line ${cls}" d="${path}"/>${s.points.map((p) => `<circle class="dot ${cls}" cx="${x(p.date).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="3.2"/>`).join('')}`;
+  }).reverse().join(''); // la 1re courbe dessinée en dernier (au-dessus)
+  const svg = `
+    <svg class="chart" viewBox="0 0 ${W} ${H}" role="img">
+      ${ticks.map((v) => `<line class="grid" x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${padL - 6}" y="${y(v) + 4}" text-anchor="end">${fmtY(v)}</text>`).join('')}
+      ${target != null ? `<line class="target" x1="${padL}" x2="${W - padR}" y1="${y(target)}" y2="${y(target)}"/>` : ''}
+      ${lines}
+      ${labels.map((d, i) => `<text class="axis" x="${x(d)}" y="${H - 6}" text-anchor="${labels.length === 1 ? 'middle' : i === 0 ? 'start' : 'end'}">${fmtX(d)}</text>`).join('')}
+    </svg>`;
+  const legend = series.length > 1
+    ? h('div.chart-legend', null, series.map((s, k) => h('span', null, h(`i.sw.s${Math.min(k, 2)}`), s.name)))
+    : null;
+  return h('div', null, h('div', { html: svg }), legend);
 }
