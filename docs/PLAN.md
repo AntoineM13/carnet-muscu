@@ -84,8 +84,8 @@ Uniquement après le feu vert explicite d'Antoine.
 - [ ] Rédiger le message pour les amis (court, en français) — connexion par **pseudo**, compte créé **depuis le téléphone qui a les données**, mot de passe propre à l'app :
   1. **Avant la mise à jour** : Réglages → Exporter la sauvegarde complète → Enregistrer dans Fichiers.
   2. Après la mise à jour (fermer complètement l'app et la rouvrir) : Réglages → Compte et synchronisation → Créer un compte (aucun e-mail de confirmation). Leur historique local est envoyé automatiquement.
-- [ ] Attendre qu'Antoine confirme que les amis ont fait leur sauvegarde.
-- [ ] Fusionner `sync-supabase` dans `master` : incrémenter `VERSION` dans `sw.js` (version propre, ex. `v1.3.0`), tests au vert, `node tools/check-sw.mjs`, mettre à jour `README.md`, `docs/DEPLOIEMENT.md` et `docs/SPEC.md`. Publier.
+- [x] Attendre qu'Antoine confirme que les amis ont fait leur sauvegarde (confirmé le 2026-11-11).
+- [x] (2026-11-11, v2.0.0) Fusionner `sync-supabase` dans `master` : incrémenter `VERSION` dans `sw.js` (version propre, ex. `v1.3.0`), tests au vert, `node tools/check-sw.mjs`, mettre à jour `README.md`, `docs/DEPLOIEMENT.md` et `docs/SPEC.md`. Publier.
 - [ ] Vérifier la production en ligne, puis supprimer le dépôt de test (`gh repo delete` ou guider Antoine) et retirer son adresse des Redirect URLs.
 
 ✅ Critère : les 3 utilisateurs sont connectés et synchronisés, et la sauvegarde nocturne tourne.

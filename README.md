@@ -1,6 +1,6 @@
 # Carnet de muscu
 
-Carnet de bord de musculation pour iPhone, sous forme de PWA : installable depuis Safari, 100 % hors-ligne, sans compte et sans serveur. Les données restent sur le téléphone (IndexedDB).
+Carnet de bord de musculation pour iPhone et Android, sous forme de PWA : installable depuis Safari ou Chrome, 100 % hors-ligne. Les données restent sur le téléphone (IndexedDB), avec une **synchronisation en ligne optionnelle** (Supabase, compte par pseudo + mot de passe) : voir `docs/SPEC.md` §2b et `docs/DEPLOIEMENT.md` §4.
 
 - **Démarrer en local** : `python3 -m http.server 8000` à la racine, puis ouvrir http://localhost:8000
 - **Tests des modules métier** : `node --test tests/*.test.mjs`
