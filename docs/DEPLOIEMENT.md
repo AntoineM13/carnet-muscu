@@ -97,7 +97,7 @@ Dans le tableau de bord : https://supabase.com/dashboard → projet **carnet-mus
 ### Fermer les inscriptions (une fois les 3 comptes créés)
 1. **Authentication** → **Sign In / Providers** (ou *Providers*).
 2. Désactiver **Allow new users to sign up**, puis **Save**.
-3. Dans l'app, « Créer un compte » affiche alors : « Les inscriptions sont fermées. Demande à Antoine de créer ton compte. »
+3. Dans l'app, « Créer un compte » affiche alors : « Les inscriptions sont fermées par sécurité. Demande à la personne qui t’a partagé l’app de créer ton compte. »
 
 ### Créer un compte à la main (nouvel utilisateur, inscriptions fermées)
 1. **Authentication** → **Users** → **Add user** → **Create new user**.

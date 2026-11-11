@@ -18,7 +18,7 @@ export class SupabaseError extends Error {
 function frenchAuthError(status, body) {
   const code = body?.error_code || body?.code || body?.error || '';
   const msg = (body?.msg || body?.message || body?.error_description || '').toLowerCase();
-  if (code === 'signup_disabled' || msg.includes('signups not allowed')) return 'Les inscriptions sont fermées. Demande à Antoine de créer ton compte.';
+  if (code === 'signup_disabled' || msg.includes('signups not allowed')) return 'Les inscriptions sont fermées par sécurité. Demande à la personne qui t’a partagé l’app de créer ton compte.';
   if (code === 'invalid_credentials' || msg.includes('invalid login')) return 'Pseudo ou mot de passe incorrect.';
   if (code === 'user_already_exists' || msg.includes('already registered')) return 'Ce pseudo est déjà pris.';
   if (code === 'same_password') return 'Choisis un mot de passe différent de l’actuel.';

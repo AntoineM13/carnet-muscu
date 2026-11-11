@@ -84,7 +84,7 @@ function openPasswordSheet() {
 function loginForm(onboarding) {
   let mode = 'login';
   let busy = false;
-  const email = h('input.input', { type: 'text', autocomplete: 'username', placeholder: 'Pseudo (ex. antoine)', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false' });
+  const email = h('input.input', { type: 'text', autocomplete: 'username', placeholder: 'Pseudo', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false' });
   const pass = h('input.input', { type: 'password', autocomplete: 'current-password', placeholder: 'Mot de passe (6 caractères min.)' });
   const err = h('p.small', { style: { color: 'var(--warn)', minHeight: '0' } });
   const submit = h('button.btn.primary.block', { type: 'submit' }, 'Se connecter');
