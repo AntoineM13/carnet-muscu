@@ -57,6 +57,25 @@ export function lastPerformance(exerciseId, sessions, { excludeSessionId = null,
   return { date: last.date, sessionId: last.session.id, sets, context };
 }
 
+/**
+ * Série n° `index` (séries de travail) : ce qui a été fait la dernière fois
+ * et l'objectif proposé aujourd'hui, pour les afficher côte à côte.
+ * `trend` compare l'objectif à la dernière fois (charge, puis reps).
+ */
+export function setComparison(last, sugSets, index) {
+  const src = last?.sets?.[index];
+  const prev = src ? mainStage(src) : null;
+  const t = sugSets?.[index] || null;
+  const target = t && (t.load != null || t.reps != null) ? { load: t.load, reps: t.reps } : null;
+  let trend = null;
+  if (prev && target) {
+    const dl = (target.load ?? 0) - (prev.load ?? 0);
+    const dr = (target.reps ?? 0) - (prev.reps ?? 0);
+    trend = dl > 0 ? 'up' : dl < 0 ? 'down' : dr > 0 ? 'up' : dr < 0 ? 'down' : 'same';
+  }
+  return { last: prev ? { load: prev.load, reps: prev.reps } : null, target, trend };
+}
+
 /** Le mode que l'app choisirait seule. */
 export function autoMode(last, target, form = 'normal') {
   if (form === 'ko') return 'recup';
@@ -129,7 +148,7 @@ export function suggest({ exerciseId, target, mode = null, form = 'normal', sett
  */
 export function prefillSets(exerciseId, count, sessions, opts = {}) {
   const { exercise = null, target = null, form = 'normal', mode = null, settings = null, excludeSessionId = null, templateId = null } = opts;
-  if (target) {
+  if (target && settings?.suggestionsEnabled !== false) {
     const sug = suggest({ exerciseId, target, mode, form, settings, sessions, exercise, excludeSessionId, templateId });
     if (sug) return sug.sets;
   }

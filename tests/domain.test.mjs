@@ -337,3 +337,28 @@ test('dayLabel : choix du jour de la séance', async () => {
   assert.equal(dayLabel('2026-11-10', '2026-11-11'), 'Hier');
   assert.equal(dayLabel('2026-11-09', '2026-11-11'), 'Lun. 9 nov.');
 });
+
+test('setComparison : dernière fois et objectif côte à côte, par série', async () => {
+  const { setComparison } = await import('../js/domain/progression.js');
+  const st = (load, reps) => ({ type: 'normale', done: true, stages: [{ load, reps }] });
+  const last = { sets: [st(60, 12), st(60, 10)] };
+  assert.deepEqual(setComparison(last, [{ load: 62.5, reps: 8 }, { load: 60, reps: 11 }], 0), { last: { load: 60, reps: 12 }, target: { load: 62.5, reps: 8 }, trend: 'up' });
+  assert.equal(setComparison(last, [{ load: 62.5, reps: 8 }, { load: 60, reps: 11 }], 1).trend, 'up');
+  assert.equal(setComparison(last, [{ load: 54, reps: 12 }], 0).trend, 'down');
+  const third = setComparison(last, null, 2);
+  assert.equal(third.last, null); assert.equal(third.target, null);
+  assert.equal(setComparison(null, [{ load: null, reps: null }], 0).target, null);
+});
+
+test('suggestions coupées : les séries reprennent la dernière fois', async () => {
+  const { prefillSets } = await import('../js/domain/progression.js');
+  const target = { sets: 3, repMin: 8, repMax: 12, restSec: 90, increment: 2.5 };
+  const past = { id: 'p1', status: 'done', date: '2026-11-04', templateId: 't1', items: [{ exerciseId: 'ex1', target, sets: [
+    { type: 'normale', done: true, stages: [{ load: 60, reps: 12 }] },
+    { type: 'normale', done: true, stages: [{ load: 60, reps: 12 }] },
+    { type: 'normale', done: true, stages: [{ load: 60, reps: 12 }] }] }] };
+  const on = prefillSets('ex1', 3, [past], { target, templateId: 't1', settings: { ...DEFAULT_SETTINGS } });
+  assert.equal(on[0].load, 62.5); // haut de plage atteint : on monte
+  const off = prefillSets('ex1', 3, [past], { target, templateId: 't1', settings: { ...DEFAULT_SETTINGS, suggestionsEnabled: false } });
+  assert.deepEqual(off, [{ load: 60, reps: 12 }, { load: 60, reps: 12 }, { load: 60, reps: 12 }]);
+});

@@ -67,7 +67,7 @@ export function pickExercise({ title = 'Choisir un exercice', exclude = [], high
         ];
         // Recherche : mes exercices + banque, tous groupes confondus.
         if (q.trim()) return [...head, exerciseBrowser(ui, cb)];
-        const tabs = segmented([{ value: 'mine', label: 'Mes exercices' }, { value: 'muscle', label: 'Par muscle + banque' }], view, (v) => { view = v; ui.group = null; api.refresh(); });
+        const tabs = segmented([{ value: 'mine', label: 'Mes exercices' }, { value: 'muscle', label: 'Par muscle + catalogue' }], view, (v) => { view = v; ui.group = null; api.refresh(); });
         if (view === 'muscle') {
           const gLabel = MUSCLE_TREE.find((g) => g.id === ui.group)?.label;
           return [...head, tabs, h('div', { style: { height: '10px' } }),
@@ -87,7 +87,7 @@ export function pickExercise({ title = 'Choisir un exercice', exclude = [], high
             h('div.eyebrow.list-group-title', null, g),
             h('div.list', null, groups[g].map((e) => exRow(e, () => done(e.id, api)))),
           ]),
-          !list.length ? h('p.muted.center', { style: { padding: '20px' } }, 'Aucun exercice. Va dans « Par muscle + banque ».') : null,
+          !list.length ? h('p.muted.center', { style: { padding: '20px' } }, 'Aucun exercice. Va dans « Par muscle + catalogue ».') : null,
         ];
       },
     });

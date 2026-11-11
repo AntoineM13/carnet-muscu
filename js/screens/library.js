@@ -176,9 +176,9 @@ function descriptionField(e, view, upd) {
       style: { marginTop: '10px' },
       onclick: async () => {
         if (!e.name.trim() || e.name === 'Nouvel exercice') { toast('Donne d’abord un nom à l’exercice.'); return; }
-        try { await shareToBank(e); toast(shared ? 'Banque commune mise à jour' : 'Partagé dans la banque commune'); rerender(); } catch (err) { toast(err.message); }
+        try { await shareToBank(e); toast(shared ? 'Catalogue mis à jour' : 'Partagé dans le catalogue'); rerender(); } catch (err) { toast(err.message); }
       },
-    }, icon('upload', 'sm'), shared ? 'Mettre à jour dans la banque commune' : 'Partager dans la banque commune') : null,
-    shared ? h('p.tiny.faint', { style: { margin: '6px 2px 0' } }, mine ? 'Visible par tous dans la banque commune.' : 'Exercice de la banque commune, proposé par un autre utilisateur.')
+    }, icon('upload', 'sm'), shared ? 'Mettre à jour dans le catalogue' : 'Partager dans le catalogue') : null,
+    shared ? h('p.tiny.faint', { style: { margin: '6px 2px 0' } }, mine ? 'Visible par tous dans le catalogue.' : 'Exercice du catalogue, partagé par un autre utilisateur.')
       : syncStatus.user ? h('p.tiny.faint', { style: { margin: '6px 2px 0' } }, 'Les autres pourront l’ajouter à leur bibliothèque.') : null);
 }

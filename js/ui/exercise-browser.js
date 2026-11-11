@@ -45,7 +45,7 @@ export function exerciseBrowser(ui, cb) {
     if (!items.length) return h('div.empty.small', null, 'Aucun exercice trouvé. Tu peux le créer avec le bouton +.');
     return [
       mine.length ? [h('div.eyebrow.list-group-title', null, 'Mes exercices'), h('div.list', null, mine.map((it) => row(it, cb)))] : null,
-      bank.length ? [h('div.eyebrow.list-group-title', null, 'Dans la banque'), h('div.list', null, bank.map((it) => row(it, cb)))] : null,
+      bank.length ? [h('div.eyebrow.list-group-title', null, 'Suggestions du catalogue'), h('div.list', null, bank.map((it) => row(it, cb)))] : null,
     ];
   }
 
@@ -58,7 +58,7 @@ export function exerciseBrowser(ui, cb) {
         h('div.gt-count', null,
           c.mine ? h('span.mine', null, `${c.mine} à toi`) : null,
           c.mine && c.bank ? ' · ' : null,
-          c.bank ? `${c.bank} dans la banque` : null,
+          c.bank ? `${c.bank} suggestion${c.bank > 1 ? 's' : ''}` : null,
           !c.mine && !c.bank ? '—' : null));
     }));
   }
@@ -102,7 +102,7 @@ function row(it, cb) {
   return h('div.list-row.bank-row', null,
     h('button.grow.bank-open', { onclick: () => cb.openBank(b) },
       h('div.title.ellipsis', null, b.fr),
-      h('div.sub.ellipsis', null, [exerciseTags(b.mech, b.eq), b.source === 'commune' ? 'banque commune' : null].filter(Boolean).join(' · '))),
+      h('div.sub.ellipsis', null, [exerciseTags(b.mech, b.eq), b.source === 'commune' ? 'partagé' : null].filter(Boolean).join(' · '))),
     h('button.icon-btn.add-btn', { 'aria-label': `Ajouter ${b.fr}`, onclick: () => cb.addBank(b) }, icon('plus', 'sm')));
 }
 
@@ -112,7 +112,7 @@ export function bankEntryDetails(b) {
   return [
     b.en ? h('p.small.muted', { style: { marginTop: '-4px' } }, b.en) : null,
     h('div.bank-tags', null, h('span.badge.outline', null, exerciseTags(b.mech, b.eq) || '—'), b.uni ? h('span.badge.outline', null, 'Unilatéral') : null,
-      b.source === 'commune' ? h('span.badge.outline', null, 'Banque commune') : null),
+      b.source === 'commune' ? h('span.badge.outline', null, 'Partagé') : null),
     h('div.field', { style: { marginTop: '14px' } }, h('label', null, 'Muscles'), h('div', null, musclesSummary(ex))),
     b.d ? h('p', { style: { marginTop: '12px', lineHeight: '1.5' } }, b.d) : null,
   ];

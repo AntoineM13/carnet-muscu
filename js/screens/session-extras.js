@@ -37,7 +37,7 @@ export function setForm(session, form) {
 
 export function sessionTopExtras(ctx) {
   const { session, idx, editMode } = ctx;
-  if (editMode || idx !== 0) return [];
+  if (editMode || idx !== 0 || state.settings.suggestionsEnabled === false) return [];
   const started = session.items.some((it) => it.sets.some((s) => s.done && s.type !== 'echauffement'));
   if (started) return [];
   return [h('div.form-card', null,
@@ -48,7 +48,7 @@ export function sessionTopExtras(ctx) {
 
 export function exerciseExtras(ctx, item) {
   const { session, editMode } = ctx;
-  if (editMode || item.replacedBy) return [];
+  if (editMode || item.replacedBy || state.settings.suggestionsEnabled === false) return [];
   const sug = itemSuggestion(session, item);
   if (!sug) return [];
   const pick = (m) => {
@@ -59,7 +59,7 @@ export function exerciseExtras(ctx, item) {
   };
   return [h(`div.sug-card.mode-${sug.mode}`, null,
     h('div.sug-head', null,
-      h('span.eyebrow', null, "Aujourd'hui"),
+      h('span.eyebrow', null, 'Objectif du jour'),
       h('div.sug-modes', null, Object.entries(MODES).map(([k, v]) => h(`button${sug.mode === k ? '.on' : ''}`, {
         'aria-pressed': String(sug.mode === k), onclick: () => pick(k),
       }, v.label, k === sug.auto ? h('span.auto', null, 'auto') : null)))),

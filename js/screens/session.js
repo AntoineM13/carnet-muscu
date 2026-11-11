@@ -11,7 +11,7 @@ import { h, haptic } from '../core/h.js';
 import { state, getSession, getExercise, exerciseName, getTemplate } from '../core/store.js';
 import { clone, fmtNum, fmtDuration, fmtDateShort, todayISO, parseNum } from '../core/util.js';
 import * as Ses from '../domain/session.js';
-import { lastPerformance } from '../domain/progression.js';
+import { lastPerformance, setComparison } from '../domain/progression.js';
 import { warmupSets, plateBreakdown } from '../domain/tools.js';
 import { formatSets, isWorkSet } from '../domain/stats.js';
 import { SET_TYPES } from '../data/defaults.js';
@@ -26,7 +26,7 @@ import { go, rerender } from '../core/router.js';
 import { openSheet, choose, confirmAction, toast } from '../ui/overlay.js';
 import { pickExercise } from '../ui/pickers.js';
 import { beep, vibrate, primeAudio } from '../ui/device.js';
-import { sessionTopExtras, exerciseExtras, FORMS, setForm } from './session-extras.js';
+import { sessionTopExtras, exerciseExtras, FORMS, setForm, itemSuggestion } from './session-extras.js';
 
 const LETTERS = 'ABCDEFGH';
 
@@ -239,8 +239,32 @@ function setRow(ctx, e) {
   h('span.set-val.num.grow', null, stageText(set, ex),
     ctx.step.isSuperset ? h('span.set-ex.ellipsis', null, ex?.name) : null),
   set.type !== 'normale' && set.type !== 'echauffement' ? h('span.badge.outline', null, type.label) : null,
+  !set.done && !ctx.editMode && set.type !== 'echauffement' && state.settings.suggestionsEnabled !== false ? h('span.set-goal', null, 'objectif') : null,
   set.done && set.restTakenSec != null ? h('span.set-rest.num', null, fmtDuration(set.restTakenSec)) : null,
   set.done ? h('span.set-check', null, icon('check', 'sm')) : h('span.set-todo'));
+}
+
+/** « Dernière fois » et « Objectif » de cette série, côte à côte (sans ambiguïté). */
+function setCompare(ctx, item, set, ex) {
+  const { session } = ctx;
+  const index = item.sets.filter((s) => s.type !== 'echauffement').indexOf(set);
+  const last = lastPerformance(item.exerciseId, state.sessions, { excludeSessionId: session.id, templateId: session.templateId, target: item.target });
+  const sugOn = state.settings.suggestionsEnabled !== false;
+  const sug = sugOn ? itemSuggestion(session, item) : null;
+  const c = setComparison(last, sug?.sets, index);
+  const fmt = (v) => {
+    if (!v) return '—';
+    const load = v.load == null ? '–' : ex?.loadMode === 'lest' ? (v.load === 0 ? 'PDC' : `${v.load > 0 ? '+' : ''}${fmtNum(v.load)} kg`) : `${fmtNum(v.load)} kg`;
+    return `${load} × ${v.reps ?? '–'}`;
+  };
+  return h(`div.set-compare${sugOn ? '' : '.single'}`, null,
+    h('div.sc-col.sc-last', null,
+      h('span.sc-k', null, last ? `Dernière fois · ${fmtDateShort(last.date)}` : 'Dernière fois'),
+      h('span.sc-v.num', null, c.last ? fmt(c.last) : last ? 'Pas de série ' + (index + 1) : 'Première fois')),
+    sugOn ? h('div.sc-col.sc-target', null,
+      h('span.sc-k', null, 'Objectif'),
+      h('span.sc-v.num', null, c.target ? fmt(c.target) : '—',
+        c.trend === 'up' ? icon('up', 'sm') : c.trend === 'down' ? icon('down', 'sm') : null)) : null);
 }
 
 /** Carte de la série en cours : saisie + validation en 1 tap. */
@@ -283,6 +307,7 @@ function currentSetCard(ctx, e) {
         isWarm ? 'Échauffement' : ctx.step.isSuperset ? ex?.name : `Série ${e.round + 1} sur ${item.sets.filter((s) => s.type !== 'echauffement').length}`),
       set.type === 'echec' && h('span.badge.outline', null, 'Échec'),
       h('button.icon-btn', { 'aria-label': 'Détails de la série', onclick: () => openSetSheet(ctx, item.id, set.id) }, icon('more'))),
+    !isWarm && !ctx.editMode ? setCompare(ctx, item, set, ex) : null,
     set.stages.map((stg, i) => h('div.stage', null,
       i > 0 && h('div.stage-head', null, h('span.eyebrow', null, `Palier ${i + 1} · dégressive`),
         h('button.link-btn.small', { onclick: () => { Ses.removeStage(set, i); ctx.save(); } }, 'Retirer')),
