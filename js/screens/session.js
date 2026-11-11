@@ -294,7 +294,7 @@ function currentSetCard(ctx, e) {
       h('div.stage-grid', null,
         stepper({ label: ex?.loadMode === 'lest' ? 'Lest (kg)' : 'Charge (kg)', value: stg.load, step: inc, min: ex?.loadMode === 'lest' ? -200 : 0, placeholder: '0', onChange: (v) => { stg.load = v; touch(); } }),
         stepper({ label: ex?.unilateral ? 'Reps / côté' : 'Reps', value: stg.reps, step: 1, min: 0, placeholder: `${item.target.repMin}-${item.target.repMax}`, onChange: (v) => { stg.reps = v; touch(); } })),
-      i === 0 && prev ? h('div.stage-prev.num', null, h('span', null, 'avant : ', h('strong', null, prevLoad(prev.load))), h('span', null, 'avant : ', h('strong', null, prev.reps ?? '–'))) : null)),
+      i === 0 && prev ? h('div.stage-prev.num', null, h('span', null, 'séance préc. : ', h('strong', null, prevLoad(prev.load))), h('span', null, 'séance préc. : ', h('strong', null, prev.reps ?? '–'))) : null)),
     h('div.set-current-tools', null,
       !isWarm && h('button.btn.sm.ghost', {
         onclick: () => { Ses.addStage(set, { dropPct: state.settings.dropPct, increment: inc }); ctx.save(); },

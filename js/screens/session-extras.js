@@ -7,7 +7,7 @@
  * pour les séances anciennes qui l'ont enregistrée.)
  */
 import { h } from '../core/h.js';
-import { state, getExercise } from '../core/store.js';
+import { state, getExercise, saveSettings } from '../core/store.js';
 import { fmtNum, fmtDateShort } from '../core/util.js';
 import { suggest, MODES, compactSets, comparisonRows } from '../domain/progression.js';
 import { applySuggestion } from '../domain/session.js';
@@ -54,9 +54,9 @@ export function exerciseExtras(ctx, item, last) {
   const lest = ex?.loadMode === 'lest';
   const sug = !editMode && !item.replacedBy && suggestionsOn() ? itemSuggestion(session, item) : null;
   if (!sug) {
-    return [h('div.goal-card', null,
+    return [h('div.xc-card', null,
       h('span.eyebrow', null, last ? `Dernière fois · ${fmtDateShort(last.date)}` : 'Dernière fois'),
-      last ? h('span.num.goal-last-v', null, compactSets(last.sets, fmtNum, { lest })) : h('span.faint', null, 'Première fois'))];
+      last ? h('span.num.xc-last-v', null, compactSets(last.sets, fmtNum, { lest })) : h('span.faint', null, 'Première fois'))];
   }
   const pick = async () => {
     const m = await choose({
@@ -75,12 +75,16 @@ export function exerciseExtras(ctx, item, last) {
   };
   const ic = sug.mode === 'augmenter' ? 'up' : sug.mode === 'recup' ? 'down' : 'repeat';
   const rows = comparisonRows(last, sug.sets);
-  return [h(`div.goal-card.mode-${sug.mode}`, null,
-    h('div.goal-head', null,
-      h('span.goal-mode', null, icon(ic, 'sm'), MODES[sug.mode].label),
-      h('button.link-btn.small.goal-change', { onclick: pick }, 'Changer', icon('chevron', 'sm'))),
-    h('div.goal-table.num', null,
-      h('span'), h('span.gt-h', null, 'Dernière fois', h('small', null, fmtDateShort(last.date))), h('span.gt-h.gt-today', null, 'Aujourd’hui'),
+  // Pliée : seulement la consigne et « Changer » (choix mémorisé, suit le compte).
+  const folded = !!state.settings.goalCardFolded;
+  const toggle = () => { saveSettings({ goalCardFolded: !folded }); ctx.save(); };
+  return [h(`div.xc-card.mode-${sug.mode}${folded ? '.folded' : ''}`, null,
+    h('div.xc-head', null,
+      h('button.xc-mode', { onclick: toggle, 'aria-expanded': String(!folded), 'aria-label': folded ? 'Déplier le détail' : 'Plier le détail' },
+        icon(ic, 'sm'), MODES[sug.mode].label, h('span.xc-fold', null, icon('chevron', 'sm'))),
+      h('button.link-btn.small.xc-change', { onclick: pick }, 'Changer', icon('chevron', 'sm'))),
+    folded ? null : h('div.xc-table.num', null,
+      h('span.gt-h'), h('span.gt-h', null, 'Dernière fois', h('small', null, fmtDateShort(last.date))), h('span.gt-h.gt-today', null, 'Aujourd’hui'),
       rows.map((r, i) => [
         h('span.gt-n', null, `Série ${i + 1}`),
         h('span.gt-last', null, pairTxt(r.last, lest)),
