@@ -263,23 +263,27 @@ details.archived summary { list-style: none; cursor: pointer; }
 .sync-lead { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; }
 form.card .lead { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--surface-3); }
 
-/* Carte unique par exercice : dernière fois, puis consigne du jour. */
-.goal-card { padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+/* Carte unique par exercice : consigne + tableau « Dernière fois / Aujourd'hui ». */
+.goal-card { padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
 .goal-card.mode-augmenter { border-color: var(--accent-line); }
-.goal-last { display: flex; flex-direction: column; gap: 2px; }
-.goal-last .eyebrow { font-size: 11px; }
-.goal-last-v { font-size: 15px; color: var(--text-2); }
-.goal-sep { height: 1px; background: var(--border); }
-.goal-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.goal-last-v { font-size: 16px; color: var(--text); }
+.goal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -10px 0 -6px; }
 .goal-mode { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); }
 .goal-mode svg { width: 16px; height: 16px; }
 .mode-augmenter .goal-mode { color: var(--accent); }
 .mode-recup .goal-mode svg { color: var(--warn); }
-.goal-v { font-family: var(--font-display); font-size: 20px; font-weight: 650; }
-.goal-foot { display: flex; align-items: center; gap: 10px; }
-.goal-reason { font-size: 13px; color: var(--text-2); }
 .goal-change { display: inline-flex; align-items: center; gap: 2px; color: var(--accent); white-space: nowrap; min-height: 44px; }
+.goal-table { display: grid; grid-template-columns: auto 1fr 1fr; align-items: center; column-gap: 12px; row-gap: 6px; }
+.goal-table .gt-h { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); display: flex; flex-direction: column; line-height: 1.25; }
+.goal-table .gt-h small { font-size: 11px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+.goal-table .gt-h.gt-today { color: var(--accent); align-self: start; }
+.goal-table .gt-n { font-size: 13px; color: var(--text-3); white-space: nowrap; }
+.goal-table .gt-last { font-size: 16px; color: var(--text-2); white-space: nowrap; }
+.goal-table span.gt-today:not(.gt-h) { font-size: 16px; font-weight: 650; color: var(--text); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.goal-table .gt-today svg { width: 15px; height: 15px; color: var(--accent); }
+.goal-table .gt-down svg { color: var(--warn); }
+.goal-table .gt-pad { width: 15px; }
 .ex-head.compact .goal-card { padding: 10px 12px; }
-.set-last { font-size: 13px; color: var(--text-3); margin-top: -4px; }
-.set-last strong { color: var(--text-2); font-weight: 600; }
+.stage-prev { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; font-size: 13px; color: var(--text-3); margin-top: 6px; }
+.stage-prev strong { color: var(--text-2); font-weight: 600; }
 .set-row .set-goal { font-size: 12px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }

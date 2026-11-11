@@ -238,16 +238,12 @@ function setRow(ctx, e) {
   set.done ? h('span.set-check', null, icon('check', 'sm')) : h('span.set-todo'));
 }
 
-/** Rappel discret de la même série la dernière fois (utile quand l'objectif diffère). */
-function setLastLine(ctx, item, set, ex) {
-  if (!suggestionsOn()) return null; // sinon les chiffres SONT déjà ceux de la dernière fois
-  const { session } = ctx;
+/** Même série la dernière fois, affichée sous chaque compteur (suggestions activées). */
+function prevForSet(ctx, item, set) {
+  if (!suggestionsOn() || ctx.editMode || set.type === 'echauffement') return null; // coupées : les chiffres SONT la dernière fois
   const index = item.sets.filter((s) => s.type !== 'echauffement').indexOf(set);
-  const last = lastPerformance(item.exerciseId, state.sessions, { excludeSessionId: session.id, templateId: session.templateId, target: item.target });
-  const prev = setComparison(last, null, index).last;
-  if (!prev) return null;
-  const load = prev.load == null ? '–' : ex?.loadMode === 'lest' ? (prev.load === 0 ? 'PDC' : `${prev.load > 0 ? '+' : ''}${fmtNum(prev.load)} kg`) : `${fmtNum(prev.load)} kg`;
-  return h('div.set-last.num', null, 'dernière fois : ', h('strong', null, `${load} × ${prev.reps ?? '–'}`));
+  const last = lastPerformance(item.exerciseId, state.sessions, { excludeSessionId: ctx.session.id, templateId: ctx.session.templateId, target: item.target });
+  return setComparison(last, null, index).last;
 }
 
 /** Carte de la série en cours : saisie + validation en 1 tap. */
@@ -258,6 +254,8 @@ function currentSetCard(ctx, e) {
   const inc = item.target.increment || 2.5;
   const touch = () => { set.touched = true; persistSession(session); };
   const isWarm = set.type === 'echauffement';
+  const prev = prevForSet(ctx, item, set);
+  const prevLoad = (v) => (v == null ? '–' : ex?.loadMode === 'lest' ? (v === 0 ? 'PDC' : `${v > 0 ? '+' : ''}${fmtNum(v)}`) : fmtNum(v));
 
   const validate = () => {
     if (document.activeElement?.blur) document.activeElement.blur();
@@ -290,13 +288,13 @@ function currentSetCard(ctx, e) {
         isWarm ? 'Échauffement' : ctx.step.isSuperset ? ex?.name : `Série ${e.round + 1} sur ${item.sets.filter((s) => s.type !== 'echauffement').length}`),
       set.type === 'echec' && h('span.badge.outline', null, 'Échec'),
       h('button.icon-btn', { 'aria-label': 'Détails de la série', onclick: () => openSetSheet(ctx, item.id, set.id) }, icon('more'))),
-    !isWarm && !ctx.editMode ? setLastLine(ctx, item, set, ex) : null,
     set.stages.map((stg, i) => h('div.stage', null,
       i > 0 && h('div.stage-head', null, h('span.eyebrow', null, `Palier ${i + 1} · dégressive`),
         h('button.link-btn.small', { onclick: () => { Ses.removeStage(set, i); ctx.save(); } }, 'Retirer')),
       h('div.stage-grid', null,
         stepper({ label: ex?.loadMode === 'lest' ? 'Lest (kg)' : 'Charge (kg)', value: stg.load, step: inc, min: ex?.loadMode === 'lest' ? -200 : 0, placeholder: '0', onChange: (v) => { stg.load = v; touch(); } }),
-        stepper({ label: ex?.unilateral ? 'Reps / côté' : 'Reps', value: stg.reps, step: 1, min: 0, placeholder: `${item.target.repMin}-${item.target.repMax}`, onChange: (v) => { stg.reps = v; touch(); } })))),
+        stepper({ label: ex?.unilateral ? 'Reps / côté' : 'Reps', value: stg.reps, step: 1, min: 0, placeholder: `${item.target.repMin}-${item.target.repMax}`, onChange: (v) => { stg.reps = v; touch(); } })),
+      i === 0 && prev ? h('div.stage-prev.num', null, h('span', null, 'avant : ', h('strong', null, prevLoad(prev.load))), h('span', null, 'avant : ', h('strong', null, prev.reps ?? '–'))) : null)),
     h('div.set-current-tools', null,
       !isWarm && h('button.btn.sm.ghost', {
         onclick: () => { Ses.addStage(set, { dropPct: state.settings.dropPct, increment: inc }); ctx.save(); },

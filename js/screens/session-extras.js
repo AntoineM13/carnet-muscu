@@ -9,9 +9,8 @@
 import { h } from '../core/h.js';
 import { state, getExercise } from '../core/store.js';
 import { fmtNum, fmtDateShort } from '../core/util.js';
-import { suggest, MODES } from '../domain/progression.js';
+import { suggest, MODES, compactSets, comparisonRows } from '../domain/progression.js';
 import { applySuggestion } from '../domain/session.js';
-import { formatSets } from '../domain/stats.js';
 import { choose } from '../ui/overlay.js';
 import { icon } from '../ui/icons.js';
 
@@ -41,14 +40,24 @@ export function setForm(session, form) {
 
 export const suggestionsOn = () => state.settings.suggestionsEnabled !== false;
 
-/** Carte « Dernière fois » + consigne du jour (une seule fois par exercice). */
+const loadTxt = (v, lest) => (v == null ? '–' : lest ? (v === 0 ? 'PDC' : `${v > 0 ? '+' : ''}${fmtNum(v)}`) : fmtNum(v));
+const pairTxt = (p, lest) => (p ? `${loadTxt(p.load, lest)} × ${p.reps ?? '–'}` : '—');
+
+/**
+ * Carte de l'exercice. Suggestions activées : la consigne (Augmenter /
+ * Stabiliser / Récup, « Changer ») et un tableau série par série
+ * « Dernière fois / Aujourd'hui ». Coupées : seulement la dernière fois.
+ */
 export function exerciseExtras(ctx, item, last) {
   const { session, editMode } = ctx;
-  const lastRow = h('div.goal-last', null,
-    h('span.eyebrow', null, last ? `Dernière fois · ${fmtDateShort(last.date)}` : 'Dernière fois'),
-    last ? h('span.num.goal-last-v', null, formatSets(last.sets, fmtNum)) : h('span.faint', null, 'Première fois'));
+  const ex = getExercise(item.exerciseId);
+  const lest = ex?.loadMode === 'lest';
   const sug = !editMode && !item.replacedBy && suggestionsOn() ? itemSuggestion(session, item) : null;
-  if (!sug) return [h('div.goal-card', null, lastRow)];
+  if (!sug) {
+    return [h('div.goal-card', null,
+      h('span.eyebrow', null, last ? `Dernière fois · ${fmtDateShort(last.date)}` : 'Dernière fois'),
+      last ? h('span.num.goal-last-v', null, compactSets(last.sets, fmtNum, { lest })) : h('span.faint', null, 'Première fois'))];
+  }
   const pick = async () => {
     const m = await choose({
       title: 'Consigne du jour',
@@ -65,13 +74,17 @@ export function exerciseExtras(ctx, item, last) {
     ctx.save();
   };
   const ic = sug.mode === 'augmenter' ? 'up' : sug.mode === 'recup' ? 'down' : 'repeat';
+  const rows = comparisonRows(last, sug.sets);
   return [h(`div.goal-card.mode-${sug.mode}`, null,
-    lastRow,
-    h('div.goal-sep'),
-    h('div.goal-row', null,
+    h('div.goal-head', null,
       h('span.goal-mode', null, icon(ic, 'sm'), MODES[sug.mode].label),
-      h('span.goal-v.num', null, sug.headline)),
-    h('div.goal-foot', null,
-      h('span.goal-reason.grow', null, sug.reason),
-      h('button.link-btn.small.goal-change', { onclick: pick }, 'Changer', icon('chevron', 'sm'))))];
+      h('button.link-btn.small.goal-change', { onclick: pick }, 'Changer', icon('chevron', 'sm'))),
+    h('div.goal-table.num', null,
+      h('span'), h('span.gt-h', null, 'Dernière fois', h('small', null, fmtDateShort(last.date))), h('span.gt-h.gt-today', null, 'Aujourd’hui'),
+      rows.map((r, i) => [
+        h('span.gt-n', null, `Série ${i + 1}`),
+        h('span.gt-last', null, pairTxt(r.last, lest)),
+        h('span.gt-today', null, pairTxt(r.target, lest),
+          r.trend === 'up' ? icon('up', 'sm') : r.trend === 'down' ? h('span.gt-down', null, icon('down', 'sm')) : h('span.gt-pad')),
+      ])))];
 }

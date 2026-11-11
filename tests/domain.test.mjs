@@ -362,3 +362,17 @@ test('suggestions coupées : les séries reprennent la dernière fois', async ()
   const off = prefillSets('ex1', 3, [past], { target, templateId: 't1', settings: { ...DEFAULT_SETTINGS, suggestionsEnabled: false } });
   assert.deepEqual(off, [{ load: 60, reps: 12 }, { load: 60, reps: 12 }, { load: 60, reps: 12 }]);
 });
+
+test('compactSets et comparisonRows : même écriture partout', async () => {
+  const { compactSets, comparisonRows } = await import('../js/domain/progression.js');
+  const st = (load, reps) => ({ type: 'normale', done: true, stages: [{ load, reps }] });
+  const f = (n) => String(n).replace('.', ',');
+  assert.equal(compactSets([st(40, 11), st(40, 11), st(40, 10)], f), '40 kg × 11 / 11 / 10');
+  assert.equal(compactSets([st(40, 11), st(42.5, 9)], f), '40×11 · 42,5×9');
+  assert.equal(compactSets([st(0, 12), st(0, 10)], f, { lest: true }), 'PDC × 12 / 10');
+  assert.equal(compactSets([], f), '');
+  const rows = comparisonRows({ sets: [st(40, 11), st(40, 10)] }, [{ load: 36, reps: 12 }, { load: 36, reps: 12 }, { load: 36, reps: 12 }]);
+  assert.equal(rows.length, 3);
+  assert.equal(rows[2].last, null);
+  assert.equal(rows[0].trend, 'down');
+});

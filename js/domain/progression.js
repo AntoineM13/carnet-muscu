@@ -76,6 +76,25 @@ export function setComparison(last, sugSets, index) {
   return { last: prev ? { load: prev.load, reps: prev.reps } : null, target, trend };
 }
 
+/**
+ * Écriture compacte d'une suite de séries : « 40 kg × 11 / 11 / 10 » quand la
+ * charge est la même partout, sinon « 40×11 · 42,5×9 ». `lest` : « PDC » ou « +5 kg ».
+ */
+export function compactSets(sets, fmt = (n) => String(n), { lest = false } = {}) {
+  const mains = (sets || []).map((s) => (s.stages ? mainStage(s) : s)).filter((m) => m && (m.load != null || m.reps != null));
+  if (!mains.length) return '';
+  const L = (v) => (v == null ? '–' : lest ? (v === 0 ? 'PDC' : `${v > 0 ? '+' : ''}${fmt(v)} kg`) : `${fmt(v)} kg`);
+  const same = mains.every((m) => m.load === mains[0].load);
+  if (same) return `${L(mains[0].load)} × ${mains.map((m) => m.reps ?? '–').join(' / ')}`;
+  return mains.map((m) => `${L(m.load).replace(' kg', '')}×${m.reps ?? '–'}`).join(' · ');
+}
+
+/** Lignes du tableau « Dernière fois / Aujourd'hui » (une par série de travail). */
+export function comparisonRows(last, sugSets) {
+  const n = Math.max(last?.sets?.length || 0, sugSets?.length || 0);
+  return Array.from({ length: n }, (_, i) => setComparison(last, sugSets, i));
+}
+
 /** Le mode que l'app choisirait seule. */
 export function autoMode(last, target, form = 'normal') {
   if (form === 'ko') return 'recup';
