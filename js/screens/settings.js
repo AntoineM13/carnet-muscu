@@ -2,7 +2,7 @@
  * RÉGLAGES + SAUVEGARDE / RESTAURATION.
  */
 import { h } from '../core/h.js';
-import { state, saveSettings, replaceEverything, saveSchedule, saveDoc, deleteDoc } from '../core/store.js';
+import { state, saveSettings, replaceEverything, saveSchedule, saveDoc, deleteDoc, getExercise } from '../core/store.js';
 import { fmtNum, daysBetween, todayISO, fmtDateShort, clone } from '../core/util.js';
 import { buildFullBackup, buildProgramExport, parseImport, mergeProgram, exportFileName } from '../domain/backup.js';
 import { regenerateWeek } from '../domain/planning.js';
@@ -13,6 +13,8 @@ import { go, rerender } from '../core/router.js';
 import { confirmAction, toast, choose } from '../ui/overlay.js';
 import { accountCard } from './account.js';
 import { syncStatus, signOut } from '../core/sync.js';
+import { IS_TEST_ENV } from '../core/env.js';
+import { buildDemoSessions, isDemoSession } from '../domain/demo.js';
 
 const ALL_PLATES = [25, 20, 15, 10, 5, 2.5, 2, 1.25, 1, 0.5];
 
@@ -92,6 +94,8 @@ export function renderSettings({ backup } = {}) {
       s.runsEnabled && h('div', { style: { marginTop: '12px' } },
         stepper({ label: 'Sorties visées par semaine', value: s.runsPerWeek, step: 1, min: 1, max: 7, size: 'sm', onChange: (v) => set({ runsPerWeek: v ?? 2 }) }))),
 
+    IS_TEST_ENV && group('Jeu de test (version de test seulement)', '', demoCard()),
+
     group('Données', '',
       h('button.btn.danger.block', {
         onclick: async () => {
@@ -133,6 +137,32 @@ export async function exportJSON(kind) {
   if (kind === 'backup') saveSettings({ lastExportAt: new Date().toISOString() });
   toast(kind === 'program' ? 'Programme exporté' : 'Sauvegarde exportée');
   rerender();
+}
+
+/* ------------------------------------------------- Jeu de test (TEST) -- */
+function demoCard() {
+  const n = state.sessions.filter(isDemoSession).length;
+  return h('div.card.stack', null,
+    h('p.small.muted', null, n
+      ? `${n} séances fictives chargées. Elles apparaissent dans l’historique, l’onglet Progrès et les suggestions.`
+      : 'Ajoute 4 semaines de séances fictives, faites à partir de tes séances du Programme, pour voir l’historique, l’onglet Progrès et les suggestions. Tes autres données ne sont pas touchées.'),
+    h('button.btn.primary.block', {
+      onclick: () => {
+        if (!state.templates.length) { toast('Crée d’abord des séances dans le Programme.'); return; }
+        for (const d of state.sessions.filter(isDemoSession)) deleteDoc('sessions', d.id, { silent: true });
+        const demo = buildDemoSessions({ templates: state.templates, getExercise, settings: state.settings, today: todayISO() });
+        for (const d of demo) saveDoc('sessions', d, { silent: true });
+        toast(`${demo.length} séances fictives ajoutées`);
+        go('/');
+      },
+    }, icon('plus', 'sm'), n ? 'Recharger le jeu de test' : 'Charger le jeu de test'),
+    n ? h('button.btn.ghost.block', {
+      onclick: () => {
+        for (const d of state.sessions.filter(isDemoSession)) deleteDoc('sessions', d.id, { silent: true });
+        toast('Séances fictives retirées');
+        rerender();
+      },
+    }, icon('trash', 'sm'), 'Retirer le jeu de test') : null);
 }
 
 /* --------------------------------------------------------- Import -- */

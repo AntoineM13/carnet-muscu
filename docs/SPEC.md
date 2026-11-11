@@ -20,6 +20,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
   - le programme seul (séances, bibliothèque, planning par défaut), pour le partager sans écraser l'historique de l'autre. L'import fusionne les exercices par id et conserve les notes et marqueurs de douleur locaux.
 - Hébergement : GitHub Pages, dépôt `antoinem13/carnet-muscu`, branche `master` (= production, utilisée par les 3 amis).
 - Environnement de test : dépôt `antoinem13/carnet-muscu-test` (GitHub Pages), pour tester sur téléphone sans toucher la production. Même domaine que la production, donc isolation explicite (`js/core/env.js`) : base IndexedDB `carnet-muscu-test`, préfixe de cache `cm-test-`, étiquette « TEST » dans l'en-tête de l'accueil (pas de pastille flottante : elle brouillait l'en-tête sur iPhone).
+- **Jeu de test** (version de test seulement, Réglages → « Jeu de test ») : ajoute 4 semaines de séances fictives construites à partir des séances du Programme (`js/domain/demo.js`, ids `demo-…`), pour voir historique, Progrès et suggestions. Retirable d'un bouton, sans toucher aux autres données. Absent en production.
 
 ## 2b. Synchronisation en ligne (Supabase)
 - **Local d'abord** : IndexedDB reste la source de vérité de l'appareil. L'app marche sans réseau ; la synchro se fait en arrière-plan (au démarrage, 3 s après une modification, au retour du réseau ou dans l'app, toutes les 15 s tant que l'app est visible).
@@ -155,3 +156,4 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-11-11 : fin du planning imposé (retour d'Antoine : un collègue a démarré la mauvaise séance, proposée d'office). L'accueil devient « Commencer une séance » : choix du jour puis de la séance, rien de présélectionné. Planning retiré de l'accueil, du Programme et des Réglages (données conservées, non affichées).
 - 2026-11-11 : « banque » renommée « Catalogue » dans l'interface (« 6 à toi · 12 suggestions », « Partager dans le catalogue ») : le mot « banque » ne parlait pas aux collègues.
 - 2026-11-11 : suggestions de progression désactivables (comme le chrono) et comparaison « Dernière fois / Objectif » sur chaque série (un collègue a confondu la suggestion avec sa séance précédente). Par défaut, les suggestions restent activées.
+- 2026-11-11 : jeu de test intégré à la version de test (4 semaines de séances fictives, ajout / retrait en un bouton), à la demande d'Antoine pour voir les suggestions et l'onglet Progrès sans s'entraîner.
