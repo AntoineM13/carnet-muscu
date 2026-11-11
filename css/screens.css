@@ -269,20 +269,23 @@ form.card .lead { width: 36px; height: 36px; border-radius: 10px; display: grid;
 .xc-last-v { font-size: 16px; color: var(--text); }
 .xc-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -10px 0 -4px; }
 .xc-card.folded .xc-head { margin: -10px 0; }
-.xc-mode { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); }
+.xc-mode { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px 0 10px; margin-left: -4px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text); }
+.xc-mode:active { background: var(--surface-3); }
 .xc-mode svg { width: 16px; height: 16px; }
-.xc-fold { display: inline-flex; color: var(--text-3); transform: rotate(-90deg); transition: transform .2s; }
-.xc-card.folded .xc-fold { transform: rotate(90deg); }
-.mode-augmenter .xc-mode { color: var(--accent); }
-.mode-recup .xc-mode svg { color: var(--warn); }
-.mode-recup .xc-fold svg { color: var(--text-3); }
-.xc-change { display: inline-flex; align-items: center; gap: 2px; color: var(--accent); white-space: nowrap; min-height: 44px; }
+.xc-caret { display: inline-flex; color: var(--text-3); transform: rotate(90deg); }
+.xc-caret svg { width: 14px; height: 14px; }
+.mode-augmenter .xc-mode { color: var(--accent); background: var(--accent-soft); border-color: var(--accent-line); }
+.mode-recup .xc-mode > svg { color: var(--warn); }
+.xc-fold { color: var(--text-2); margin-right: -10px; }
+.xc-fold svg { transform: rotate(-90deg); transition: transform .2s; }
+.xc-card.folded .xc-fold svg { transform: rotate(90deg); }
 /* Tableau : filets horizontaux légers, colonne « Aujourd'hui » séparée et teintée. */
 .xc-table { display: grid; grid-template-columns: auto 1fr 1fr; align-items: stretch; border-top: 1px solid var(--border); margin: 0 -14px -12px; }
 .xc-table > span { display: flex; align-items: center; padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); white-space: nowrap; }
 .xc-table > span:nth-last-child(-n+3) { border-bottom: 0; }
 .xc-table > span:nth-child(3n+1) { padding-left: 14px; }
 .xc-table > span:nth-child(3n) { padding-right: 14px; border-left: 1px solid var(--border); background: rgba(200,241,105,0.035); }
+.xc-table > span:nth-child(3n+2) { border-left: 1px solid rgba(255,255,255,0.05); }
 .xc-table .gt-h { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); flex-direction: column; align-items: flex-start; justify-content: flex-end; line-height: 1.25; padding-top: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 .xc-table .gt-h small { font-size: 11px; font-weight: 500; letter-spacing: 0; text-transform: none; }
 .xc-table .gt-h.gt-today { color: var(--accent); justify-content: flex-start; }
@@ -296,3 +299,5 @@ form.card .lead { width: 36px; height: 36px; border-radius: 10px; display: grid;
 .stage-prev { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; font-size: 13px; color: var(--text-3); margin-top: 6px; }
 .stage-prev strong { color: var(--text-2); font-weight: 600; }
 .set-row .set-goal { font-size: 12px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+.xc-mode { position: relative; }
+.xc-mode::after { content: ''; position: absolute; inset: -4px -2px; } /* zone tactile ≥ 44 px */

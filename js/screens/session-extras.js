@@ -80,9 +80,11 @@ export function exerciseExtras(ctx, item, last) {
   const toggle = () => { saveSettings({ goalCardFolded: !folded }); ctx.save(); };
   return [h(`div.xc-card.mode-${sug.mode}${folded ? '.folded' : ''}`, null,
     h('div.xc-head', null,
-      h('button.xc-mode', { onclick: toggle, 'aria-expanded': String(!folded), 'aria-label': folded ? 'Déplier le détail' : 'Plier le détail' },
-        icon(ic, 'sm'), MODES[sug.mode].label, h('span.xc-fold', null, icon('chevron', 'sm'))),
-      h('button.link-btn.small.xc-change', { onclick: pick }, 'Changer', icon('chevron', 'sm'))),
+      // Le mode se choisit en touchant sa pastille (▾) ; la flèche de droite plie / déplie.
+      h('button.xc-mode', { onclick: pick, 'aria-label': `Consigne : ${MODES[sug.mode].label}. Changer` },
+        icon(ic, 'sm'), MODES[sug.mode].label, h('span.xc-caret', null, icon('chevron', 'sm'))),
+      h('button.icon-btn.xc-fold', { onclick: toggle, 'aria-expanded': String(!folded), 'aria-label': folded ? 'Afficher le détail' : 'Masquer le détail' },
+        icon('chevron', 'sm'))),
     folded ? null : h('div.xc-table.num', null,
       h('span.gt-h'), h('span.gt-h', null, 'Dernière fois', h('small', null, fmtDateShort(last.date))), h('span.gt-h.gt-today', null, 'Aujourd’hui'),
       rows.map((r, i) => [
