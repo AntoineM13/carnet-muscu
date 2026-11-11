@@ -126,7 +126,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - Valeurs par défaut : 3 séries, 8-12 reps, 90 s de repos, incrément de 2,5 kg.
 
 ## 7. Idées pour une v2 (garder l'architecture compatible)
-Semaine de décharge, détection de stagnation, champ tempo, volume par groupe musculaire et par semaine, poids de corps, photos de progression, comparaison entre les deux utilisateurs via fichier exporté.
+**Suivi par zone de reps** (Force ≤ 6, Hypertrophie 7-12, Endurance > 12) au lieu de par séance modèle, pour la suggestion et les courbes : à faire **avant** qu'Antoine réorganise ses séances (ex. Pec/Triceps, Dos/Biceps), sinon la première suggestion peut mélanger force et volume et les courbes se coupent (discussion du 2026-11-11). Semaine de décharge, détection de stagnation, champ tempo, volume par groupe musculaire et par semaine, poids de corps, photos de progression, comparaison entre les deux utilisateurs via fichier exporté.
 
 ## 8. Journal des décisions
 Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : quoi, pourquoi`.
@@ -161,3 +161,4 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-11-11 : carte d'exercice en tableau « Dernière fois / Aujourd'hui » série par série, et « avant : … » sous chaque compteur de la série en cours (choix d'Antoine entre deux maquettes).
 - 2026-11-11 : carte d'exercice : filets de tableau, carte pliable (consigne toujours visible), « séance préc. » au lieu de « avant ». Correction : la carte d'exercice réutilisait la classe CSS des cartes d'objectifs (onglet Progrès), renommée `xc-card`.
 - 2026-11-11 : carte d'exercice : le mode devient une pastille ▾ qui ouvre le choix, la flèche de droite plie / déplie (idée d'Antoine) ; trait vertical entre « Série » et « Dernière fois ».
+- 2026-11-11 : idée notée (pas codée) : suivi de la progression par zone de reps plutôt que par séance, à faire si Antoine change le découpage de ses séances. Prochaine étape choisie : mise en production.
