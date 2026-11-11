@@ -6,7 +6,7 @@
  * (sinon les téléphones garderont l'ancienne version en cache).
  * `node tools/check-sw.mjs` vérifie que la liste ASSETS est complète.
  */
-const VERSION = 'v1.14.0-sync';
+const VERSION = 'v1.15.0-sync';
 // Version de test (même domaine que la production) : préfixe de cache distinct,
 // pour que ni l'une ni l'autre n'efface le cache de l'autre à l'activation.
 const IS_TEST = /\/carnet-muscu-test(\/|$)/.test(self.location.pathname);
@@ -41,6 +41,7 @@ const ASSETS = [
   './js/ui/muscle-picker.js',
   './js/domain/dashboard.js',
   './js/domain/demo.js',
+  './js/domain/identity.js',
   './js/screens/progress.js',
   './js/core/h.js',
   './js/core/router.js',

@@ -26,8 +26,10 @@ http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204, cors); return res.end(); }
   let body = ''; for await (const c of req) body += c;
   const j = (s, o) => { res.writeHead(s, { ...cors, 'Content-Type': 'application/json' }); res.end(o === undefined ? '' : JSON.stringify(o)); };
-  if (u.pathname === '/auth/v1/token') return j(200, { access_token: 'tok', refresh_token: 'r', expires_in: 3600, user: { id: 'u1', email: 'test@x' } });
+  if (u.pathname === '/auth/v1/token') return j(200, { access_token: 'tok', refresh_token: 'r', expires_in: 3600, user: { id: 'u1', email: (body && JSON.parse(body).email) || 'test@x' } });
   if (u.pathname === '/auth/v1/logout') return j(204);
+  if (u.pathname === '/auth/v1/signup') return process.env.NO_SIGNUP ? j(422, { code: 422, error_code: 'signup_disabled', msg: 'Signups not allowed for this instance' }) : j(200, { access_token: 'tok', refresh_token: 'r', expires_in: 3600, user: { id: 'u1', email: JSON.parse(body).email } });
+  if (u.pathname === '/auth/v1/user' && req.method === 'PUT') { console.log('PASSWORD CHANGED'); return j(200, { id: 'u1' }); }
   if (u.pathname === '/rest/v1/docs') {
     console.log(new Date().toISOString().slice(11,19), req.method, req.method === 'POST' ? JSON.parse(body).map(r => r.collection + '/' + r.id).join(',') : (u.searchParams.get('or') ? 'pull(cursor)' : 'pull(all)'));
     if (req.method === 'POST') { for (const r of JSON.parse(body)) rows.set(r.collection + '/' + r.id, { ...r, updated_at: new Date(++clock).toISOString() }); return j(201); }

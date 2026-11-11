@@ -88,6 +88,35 @@ La sauvegarde complète contient tout : programme, planning (par défaut et sema
 
 ---
 
+## 4. Comptes en ligne (Supabase) : administration par Antoine
+
+On se connecte avec un **pseudo** (ex. `antoine`). Supabase exige une adresse : l'app la fabrique (`antoine@carnet-muscu.app`). Aucun e-mail n'est jamais envoyé. Une vraie adresse e-mail reste acceptée pour les comptes créés avant.
+
+Dans le tableau de bord : https://supabase.com/dashboard → projet **carnet-muscu**.
+
+### Fermer les inscriptions (une fois les 3 comptes créés)
+1. **Authentication** → **Sign In / Providers** (ou *Providers*).
+2. Désactiver **Allow new users to sign up**, puis **Save**.
+3. Dans l'app, « Créer un compte » affiche alors : « Les inscriptions sont fermées. Demande à Antoine de créer ton compte. »
+
+### Créer un compte à la main (nouvel utilisateur, inscriptions fermées)
+1. **Authentication** → **Users** → **Add user** → **Create new user**.
+2. E-mail : `pseudo@carnet-muscu.app` (pseudo en minuscules, sans accents ni espaces ; un espace devient `-`). Mot de passe provisoire. Cocher **Auto Confirm User**.
+3. La personne se connecte avec son pseudo et ce mot de passe, puis Réglages → Compte → **Changer mon mot de passe**.
+4. ⚠️ Elle doit se connecter **depuis le téléphone qui contient ses données** : au premier branchement d'un appareil, ce qui est en ligne l'emporte (compte neuf = vide, donc tout part du téléphone).
+
+### Mot de passe oublié
+On ne peut **jamais lire** un mot de passe : on en met un provisoire, sans toucher aux données.
+1. **SQL Editor** → **New query**, coller (remplacer le pseudo et le mot de passe) :
+   ```sql
+   update auth.users
+   set encrypted_password = extensions.crypt('MotDePasseProvisoire', extensions.gen_salt('bf'))
+   where email = 'pseudo@carnet-muscu.app';
+   ```
+2. **Run**. Résultat attendu : « Success. 1 row affected » (0 : le pseudo est mal écrit, voir Authentication → Users).
+3. Donner le mot de passe provisoire ; la personne se connecte puis le change dans Réglages → Compte.
+4. Ne **pas** supprimer le compte : ses données en ligne partiraient avec.
+
 ## Pour aller plus loin
 
 - Modifier le programme de départ (avant de le partager, par exemple) : `js/data/seed-program.js`.

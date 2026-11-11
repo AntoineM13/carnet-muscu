@@ -145,6 +145,11 @@ export async function signIn(email, password, { create = false } = {}) {
   return { hadRemoteData: !!res?.hadRemoteData, ok: !!res };
 }
 
+/** Change le mot de passe (compte connecté, réseau requis). */
+export async function changePassword(password) {
+  await client.updatePassword(password);
+}
+
 /** Déconnexion : les données restent sur l'appareil. */
 export async function signOut() {
   clearInterval(interval);

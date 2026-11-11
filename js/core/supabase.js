@@ -18,8 +18,10 @@ export class SupabaseError extends Error {
 function frenchAuthError(status, body) {
   const code = body?.error_code || body?.code || body?.error || '';
   const msg = (body?.msg || body?.message || body?.error_description || '').toLowerCase();
-  if (code === 'invalid_credentials' || msg.includes('invalid login')) return 'E-mail ou mot de passe incorrect.';
-  if (code === 'user_already_exists' || msg.includes('already registered')) return 'Un compte existe déjà avec cet e-mail.';
+  if (code === 'signup_disabled' || msg.includes('signups not allowed')) return 'Les inscriptions sont fermées. Demande à Antoine de créer ton compte.';
+  if (code === 'invalid_credentials' || msg.includes('invalid login')) return 'Pseudo ou mot de passe incorrect.';
+  if (code === 'user_already_exists' || msg.includes('already registered')) return 'Ce pseudo est déjà pris.';
+  if (code === 'same_password') return 'Choisis un mot de passe différent de l’actuel.';
   if (code === 'weak_password' || msg.includes('password should be')) return 'Mot de passe trop court (6 caractères minimum).';
   if (code === 'email_address_invalid' || msg.includes('invalid format') || msg.includes('email address')) return 'Adresse e-mail invalide.';
   if (code === 'email_not_confirmed') return 'Confirme d’abord ton e-mail (lien reçu par mail).';
@@ -111,6 +113,11 @@ export function createSupabaseClient({ url, key, loadSession, saveSession, fetch
     async signIn(email, password) {
       const data = await call('/auth/v1/token?grant_type=password', { method: 'POST', body: { email, password }, auth: false });
       return (await storeSession(data)).user;
+    },
+
+    /** Change le mot de passe du compte connecté. */
+    async updatePassword(password) {
+      await authed('/auth/v1/user', { method: 'PUT', body: { password } });
     },
 
     async signOut() {
