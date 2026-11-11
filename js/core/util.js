@@ -93,6 +93,15 @@ export function fmtDateLong(iso) {
   return `${weekdayName(iso)} ${fmtDateShort(iso)}`;
 }
 
+/** Choix du jour : « Aujourd'hui », « Hier », sinon « Lun. 9 nov. ». */
+export function dayLabel(iso, today = todayISO()) {
+  const d = daysBetween(iso, today);
+  if (d === 0) return "Aujourd'hui";
+  if (d === 1) return 'Hier';
+  const s = fmtDateLong(iso).replace(/^(\w{3})\w*/, '$1.');
+  return s.replace(/^./, (c) => c.toUpperCase());
+}
+
 /** Libellé relatif : « aujourd'hui », « hier », sinon date courte. */
 export function fmtDateRelative(iso, today = todayISO()) {
   const diff = daysBetween(iso, today);

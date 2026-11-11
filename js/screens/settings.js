@@ -34,7 +34,7 @@ export function renderSettings({ backup } = {}) {
         h('button.btn.ghost.block', { onclick: () => exportJSON('program') }, icon('download', 'sm'), 'Exporter le programme seul'),
         h('label.btn.ghost.block', null, icon('upload', 'sm'), 'Importer un fichier…',
           h('input', { type: 'file', accept: 'application/json,.json', class: 'hidden', onchange: (e) => importFile(e.target.files[0], e.target) })),
-        h('p.tiny.faint', null, 'Le programme seul (séances, exercices, planning par défaut) se partage sans toucher à l’historique de la personne qui l’importe.'))),
+        h('p.tiny.faint', null, 'Le programme seul (séances et exercices) se partage sans toucher à l’historique de la personne qui l’importe.'))),
 
     group('Saisie', '',
       h('div.list', null,
@@ -90,11 +90,6 @@ export function renderSettings({ backup } = {}) {
       h('div.list', null, switchRow('Module course à pied', !!s.runsEnabled, (v) => set({ runsEnabled: v }), 'Sorties sur l’accueil, la semaine et l’historique')),
       s.runsEnabled && h('div', { style: { marginTop: '12px' } },
         stepper({ label: 'Sorties visées par semaine', value: s.runsPerWeek, step: 1, min: 1, max: 7, size: 'sm', onChange: (v) => set({ runsPerWeek: v ?? 2 }) }))),
-
-    group('Planning', '',
-      h('div.list', null, h('button.list-row', { onclick: () => go('/program/schedule') },
-        h('div.grow', null, h('div.title', null, 'Planning par défaut'), h('div.sub', null, 'Jour de chaque séance')),
-        h('span.chev', null, icon('chevron', 'sm'))))),
 
     group('Données', '',
       h('button.btn.danger.block', {

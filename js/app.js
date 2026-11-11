@@ -12,7 +12,7 @@ import { initSync, onSyncStatus, syncLabel, syncStatus } from './core/sync.js';
 import { IS_TEST_ENV } from './core/env.js';
 
 import { renderHome } from './screens/home.js';
-import { renderProgram, renderSchedule } from './screens/program.js';
+import { renderProgram } from './screens/program.js';
 import { renderTemplateEdit } from './screens/template-edit.js';
 import { renderLibrary, renderExercise } from './screens/library.js';
 import { renderHistory, renderHistoryDetail } from './screens/history.js';
@@ -28,7 +28,6 @@ const app = document.getElementById('app');
 route('/', renderHome);
 route('/onboarding', renderOnboarding);
 route('/program', renderProgram);
-route('/program/schedule', renderSchedule);
 route('/program/t/:id', renderTemplateEdit);
 route('/library', renderLibrary);
 route('/library/g/:group', renderLibrary);

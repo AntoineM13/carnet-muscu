@@ -330,3 +330,10 @@ test('fusion de deux exercices : historique, programme, objectifs et notes regro
   assert.equal(goals[0].exerciseId, 'keep');
   assert.equal(to.notes, 'banc bas');
 });
+
+test('dayLabel : choix du jour de la séance', async () => {
+  const { dayLabel } = await import('../js/core/util.js');
+  assert.equal(dayLabel('2026-11-11', '2026-11-11'), "Aujourd'hui");
+  assert.equal(dayLabel('2026-11-10', '2026-11-11'), 'Hier');
+  assert.equal(dayLabel('2026-11-09', '2026-11-11'), 'Lun. 9 nov.');
+});

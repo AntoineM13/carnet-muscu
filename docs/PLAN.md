@@ -6,12 +6,13 @@ Coche les cases au fur et à mesure (et ajoute une ligne au journal de `docs/SPE
 
 ---
 
-## Reprise : où on en est (mis à jour le 2026-11-08)
+## Reprise : où on en est (mis à jour le 2026-11-11)
 
-- **Branche de travail** : `sync-supabase` (rien n'est sur `master` / production). Version de test publiée : **v1.7.0-sync** sur https://antoinem13.github.io/carnet-muscu-test/
+- **Branche de travail** : `sync-supabase` (rien n'est sur `master` / production). Version de test publiée : **v1.8.0-sync** sur https://antoinem13.github.io/carnet-muscu-test/
 - **Publier en test** : tests + `node tools/check-sw.mjs` + incrémenter `VERSION` (sw.js), commit, puis `git push test sync-supabase:main` (remote `test` = dépôt `AntoineM13/carnet-muscu-test`, GitHub Pages sur `main`). Vérifier le build : `gh api repos/AntoineM13/carnet-muscu-test/pages/builds/latest --jq .status`.
 - **Tester dans un navigateur sans Supabase** : `tools/dev-server.mjs` (faux Supabase + app, voir l'en-tête du fichier).
-- **Dernier lot publié, en attente du retour d'Antoine** : banque d'exercices (~130) + banque commune + bibliothèque par muscle + saisie des muscles en un écran. **Point à vérifier en priorité : le partage dans la banque commune contre le vrai Supabase** (table `bank` créée par Antoine, jamais testée en réel).
+- **Dernier lot publié (2026-11-11), en attente du retour d'Antoine** : fin du planning imposé, l'accueil propose « Commencer une séance » (jour puis séance).
+- **Lot précédent, retour encore attendu** : banque d'exercices (~130) + banque commune + bibliothèque par muscle + saisie des muscles en un écran. **Point à vérifier en priorité : le partage dans la banque commune contre le vrai Supabase** (table `bank` créée par Antoine, jamais testée en réel).
 - **Prochaines tâches, dans l'ordre** : (1) intégrer le retour d'Antoine sur la banque ; (2) signalement des exercices proches ; (3) silhouette 2D ; (4) ajustements Android ; puis étapes 3 (sauvegarde nocturne) et 4 (production).
 - **À faire par Antoine dans sa production actuelle** (ses vraies données) : plages de reps (décliné Pec/Dos 3 × 4-6 repos 180 s ; squats lourds 3-6 reps), voir la discussion du 2026-11-08 dans le journal de `docs/SPEC.md`.
 - **Pour la mise en production** : le bug de mise à jour bloquée (cache HTTP) existe aussi en production, il sera corrigé par la mise en production ; « Confirm email » doit rester désactivé (voir étape 4).
@@ -47,6 +48,7 @@ Antoine a des retours d'usage à transmettre. Les traiter **sur la branche `sync
   - [x] muscles sur deux niveaux (groupes + parties, principal / secondaires) et type de mouvement (poly / isolation) ;
   - [x] banque d'exercices commune : banque intégrée FR/EN + description (~150-200 exercices), plus ajouts partagés via une table Supabase commune (`bank`, lecture par tous les connectés, écriture par l'auteur).
   - [x] bibliothèque par groupe puis par partie, filtres type / matériel, recherche FR/EN ; saisie des muscles en un écran ;
+  - [x] lot 3 (2026-11-11) : plus de planning imposé, on choisit le jour puis la séance pour démarrer ;
   - [ ] signalement des exercices proches (à la création + badge « Doublon possible ? » dans la bibliothèque, avec « Ce sont deux exercices différents ») ;
   - [ ] silhouette 2D cliquable face / dos (à tenter ; abandon possible si le rendu n'est pas bon).
 - [ ] Implémenter, tester (`node --test tests/*.test.mjs`), republier en test.

@@ -4,10 +4,9 @@
 import { h } from '../core/h.js';
 import { state } from '../core/store.js';
 import { loadSeed, finishOnboarding } from '../core/actions.js';
-import { SEED_TEMPLATES, SEED_DEFAULT_SCHEDULE } from '../data/seed-program.js';
+import { SEED_TEMPLATES } from '../data/seed-program.js';
 import { parseImport } from '../domain/backup.js';
 import { replaceEverything } from '../core/store.js';
-import { WEEKDAYS } from '../core/util.js';
 import { icon } from '../ui/icons.js';
 import { go } from '../core/router.js';
 import { toast } from '../ui/overlay.js';
@@ -16,7 +15,6 @@ import { accountCard } from './account.js';
 
 export function renderOnboarding() {
   if (state.meta.onboarded) { go('/', { replace: true }); return { node: h('div'), tab: null }; }
-  const days = Object.entries(SEED_DEFAULT_SCHEDULE).map(([wd, id]) => `${WEEKDAYS[wd - 1].slice(0, 3)}. ${SEED_TEMPLATES.find((t) => t.id === id)?.name}`);
   const node = h('main.screen.no-tabs.onboarding', null,
     h('div.onb-logo', null, icon('dumbbell', 'lg')),
     h('h1', null, 'Carnet de muscu'),
@@ -25,8 +23,7 @@ export function renderOnboarding() {
       h('span.lead.accent', null, icon('program')),
       h('div.grow', null,
         h('div.t', null, 'Programme pré-rempli'),
-        h('div.d', null, `${SEED_TEMPLATES.map((t) => t.name).join(', ')}`),
-        h('div.d', null, days.join(' · ')))),
+        h('div.d', null, `${SEED_TEMPLATES.map((t) => t.name).join(', ')}`))),
     h('button.option.onb-option', { onclick: () => { finishOnboarding(); go('/program', { replace: true }); } },
       h('span.lead', null, icon('plus')),
       h('div.grow', null, h('div.t', null, 'Partir de zéro'), h('div.d', null, 'Crée tes séances et exercices toi-même.'))),

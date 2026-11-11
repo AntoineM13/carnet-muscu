@@ -1,172 +1,97 @@
 /**
- * Interfaces de planning partagées : feuille « jour », choix d'une séance
- * à démarrer, résolution des conflits (intervertir / décaler / sauter).
- * Objectif : toute modification en 3 taps maximum.
+ * Démarrer une séance : on choisit le jour puis la séance, rien n'est
+ * présélectionné (décision du 2026-11-11 : plus de planning imposé, il
+ * faisait démarrer la mauvaise séance). Feuille « jour » de la semaine.
+ *
+ * Les données de planning (state.schedule) restent stockées et synchronisées
+ * pour compatibilité, mais ne sont plus affichées.
  */
 import { h } from '../core/h.js';
 import { state, getTemplate } from '../core/store.js';
-import { todayISO, fmtDateLong, weekday, WEEKDAYS, fmtDateShort, weekDates } from '../core/util.js';
-import * as Plan from '../domain/planning.js';
-import { editSchedule, startSession } from '../core/actions.js';
-import { openSheet, choose } from './overlay.js';
-import { segmented } from './components.js';
+import { todayISO, fmtDateLong, fmtDateShort, addDays, daysBetween, dayLabel } from '../core/util.js';
+import { startSession } from '../core/actions.js';
+import { openSheet } from './overlay.js';
 import { icon } from './icons.js';
 import { go } from '../core/router.js';
 import { openRunSheet } from '../screens/runs.js';
 
 export const tplName = (id) => getTemplate(id)?.name || 'Séance supprimée';
 
-export const STATE_LABEL = {
-  done: 'Faite', today: "Aujourd'hui", planned: 'Prévue', late: 'En retard', skipped: 'Sautée', rest: 'Repos',
-};
+const cap = (s) => s.replace(/^./, (c) => c.toUpperCase());
 
-export function itemStatusLabel(it, today = todayISO()) {
-  if (it.status === 'done') return 'Faite';
-  if (it.status === 'skipped') return 'Sautée';
-  if (!it.plannedDate) return 'Dès que possible';
-  if (it.plannedDate < today) return 'En retard';
-  if (it.status === 'moved') return 'Décalée';
-  return it.plannedDate === today ? "Aujourd'hui" : 'Prévue';
-}
-
-/** Où cette séance est-elle prévue cette semaine ? (texte d'aide) */
-function plannedHint(templateId, date) {
-  const week = Plan.ensureWeek(state.schedule, date);
-  const it = week.items.find((i) => i.templateId === templateId && Plan.isActive(i));
-  if (!it) {
-    const done = week.items.find((i) => i.templateId === templateId && i.status === 'done');
-    return done ? 'Déjà faite cette semaine' : 'Non prévue cette semaine';
-  }
-  if (!it.plannedDate) return 'À faire dès que possible';
-  return it.plannedDate === date ? 'Prévue ce jour' : `Prévue ${WEEKDAYS[weekday(it.plannedDate) - 1]}`;
-}
-
-/** Demande le sort de la séance déplacée. Résout 'swap' | 'shift' | 'skip' | null. */
-export function askResolution(options, displacedName, sourceDay) {
-  return choose({
-    title: `Et « ${displacedName} » ?`,
-    subtitle: 'Elle était prévue ce jour-là.',
-    options: options.map((o) => ({
-      value: o,
-      label: Plan.RESOLUTION_LABELS[o].label + (o === 'swap' && sourceDay ? ` (vers ${sourceDay})` : ''),
-      help: Plan.RESOLUTION_LABELS[o].help,
-      on: o === options[0],
-    })),
-  });
+/** « dernière fois il y a 3 j » pour une séance modèle (avant `date`). */
+export function lastDoneLabel(templateId, date = todayISO()) {
+  const s = state.sessions
+    .filter((x) => x.status === 'done' && x.templateId === templateId)
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
+  if (!s) return 'jamais faite';
+  const d = daysBetween(s.date, date);
+  if (d < 0) return `faite le ${fmtDateShort(s.date)}`;
+  return d === 0 ? "faite aujourd'hui" : d === 1 ? 'faite hier' : `dernière fois il y a ${d} j`;
 }
 
 /**
- * Place une séance (ou repos) un jour donné, pour cette semaine ou toutes.
- * Pose la question de résolution si nécessaire. Résout true si appliqué.
+ * Choisir le jour, puis la séance à démarrer. `initialDate` permet d'ouvrir
+ * la feuille sur un jour passé (saisie a posteriori).
  */
-export async function placeWithResolution(templateId, date, scope = 'week', { silent = false } = {}) {
-  if (scope === 'all') {
-    const wd = weekday(date);
-    const a = Plan.analyzeDefault(state.schedule, wd, templateId);
-    let res = 'swap';
-    if (a.options.length) {
-      res = await askResolution(a.options, tplName(a.displaced), a.sourceWd ? WEEKDAYS[a.sourceWd - 1] : null);
-      if (!res) return false;
-    }
-    editSchedule((s) => {
-      Plan.setDefault(s, wd, templateId, res);
-      if (date >= todayISO()) Plan.regenerateWeek(s, todayISO());
-    }, 'Planning par défaut modifié');
-    return true;
-  }
-  const a = Plan.analyzePlace(state.schedule, templateId, date);
-  if (a.already) return true;
-  let res = 'swap';
-  if (a.options.length) {
-    const srcDay = a.source?.plannedDate ? WEEKDAYS[weekday(a.source.plannedDate) - 1] : null;
-    res = await askResolution(a.options, tplName(a.displaced.templateId), srcDay);
-    if (!res) return false;
-  }
-  editSchedule((s) => Plan.placeTemplate(s, templateId, date, res), silent ? null : (templateId ? 'Planning modifié' : 'Jour passé en repos'));
-  return true;
-}
-
-/** Feuille « jour » : changer la séance d'un jour, ou le passer en repos. */
-export function openDaySheet(date) {
-  let scope = 'week';
+export function openStartPicker(initialDate = todayISO()) {
   const today = todayISO();
+  let date = initialDate > today ? today : initialDate;
+  const yesterday = addDays(today, -1);
+  let other = date !== today && date !== yesterday; // « Autre jour » : sélecteur de date
   openSheet({
-    title: fmtDateLong(date).replace(/^./, (c) => c.toUpperCase()),
+    title: 'Commencer une séance',
     render: (api) => {
-      const info = Plan.dayInfo(state.schedule, date, today, state.sessions);
-      const current = info.items.filter(Plan.isActive);
-      const pick = async (templateId) => {
+      const start = (templateId) => {
         api.close();
-        await placeWithResolution(templateId, date, scope);
+        startSession({ templateId, date });
+        go('/session');
       };
       return [
-        // Séances déjà faites / sautées ce jour
-        ...info.doneSessions.map((s) => h('button.option', { onclick: () => { api.close(); go(`/history/${s.id}`); } },
-          icon('check'), h('div.grow', null, h('div.t', null, s.templateName || 'Séance'), h('div.d', null, 'Faite — voir le détail')))),
-        ...info.items.filter((i) => i.status === 'skipped').map((it) => h('button.option', {
-          onclick: () => { api.close(); editSchedule(() => Plan.restoreItem(it), 'Séance rétablie'); },
-        }, icon('undo'), h('div.grow', null, h('div.t', null, tplName(it.templateId)), h('div.d', null, 'Sautée — toucher pour la rétablir')))),
-        ...current.map((it) => h('div.card', { style: { marginBottom: '12px' } },
-          h('div.eyebrow', null, itemStatusLabel(it, today)),
-          h('h3', { style: { margin: '4px 0 12px' } }, tplName(it.templateId)),
-          h('div.row-flex', null,
-            h('button.btn.primary.grow', { onclick: () => { api.close(); startPlanned(it); } }, icon('play', 'sm'), 'Démarrer'),
-            h('button.btn.ghost', { onclick: () => { api.close(); editSchedule(() => Plan.skipItem(it), 'Séance sautée cette semaine'); } }, 'Sauter')))),
-        h('div.eyebrow', { style: { margin: '14px 0 8px' } }, current.length ? 'Remplacer par' : 'Prévoir'),
-        segmented([{ value: 'week', label: 'Cette semaine' }, { value: 'all', label: 'Toutes les semaines' }], scope, (v) => { scope = v; api.refresh(); }),
-        h('div', { style: { height: '12px' } }),
-        ...state.templates.filter((t) => !current.some((c) => c.templateId === t.id)).map((t) => h('button.option', { onclick: () => pick(t.id) },
-          h('div.grow', null, h('div.t', null, t.name),
-            h('div.d', null, scope === 'all'
-              ? (Object.entries(state.schedule.default).find(([, id]) => id === t.id) ? `Par défaut le ${WEEKDAYS[Number(Object.entries(state.schedule.default).find(([, id]) => id === t.id)[0]) - 1]}` : 'Pas de jour par défaut')
-              : plannedHint(t.id, date))))),
-        (current.length || (scope === 'all' && state.schedule.default[weekday(date)])) && h('button.option', { onclick: () => pick(null) },
-          icon('moon'), h('div.grow', null, h('div.t', null, 'Repos'), h('div.d', null, 'Aucune séance ce jour'))),
-        state.settings.runsEnabled && date <= today && h('button.option', { onclick: () => { api.close(); openRunSheet(null, date); } },
-          icon('run'), h('div.grow', null, h('div.t', null, 'Ajouter une sortie de course'), h('div.d', null, 'Distance, durée, allure'))),
+        h('div.eyebrow', { style: { margin: '2px 0 8px' } }, 'Jour'),
+        h('div.chips', null,
+          h(`button.chip${!other && date === today ? '.on' : ''}`, { onclick: () => { date = today; other = false; api.refresh(); } }, "Aujourd'hui"),
+          h(`button.chip${!other && date === yesterday ? '.on' : ''}`, { onclick: () => { date = yesterday; other = false; api.refresh(); } }, 'Hier'),
+          h(`button.chip${other ? '.on' : ''}`, { onclick: () => { other = true; api.refresh(); } }, other && date !== today && date !== yesterday ? dayLabel(date, today) : 'Autre jour')),
+        other ? h('input.input', {
+          type: 'date', value: date, max: today, 'aria-label': 'Date de la séance', style: { marginTop: '8px' },
+          onchange: (e) => { if (e.target.value && e.target.value <= today) { date = e.target.value; api.refresh(); } },
+        }) : null,
+        h('div.eyebrow', { style: { margin: '18px 0 8px' } }, `Séance · ${dayLabel(date, today).toLowerCase()}`),
+        state.templates.length ? null : h('p.sheet-sub', null, 'Aucune séance configurée : crée-les dans l’onglet Programme.'),
+        ...state.templates.map((t) => {
+          const n = t.blocks.reduce((a, b) => a + b.slots.length, 0);
+          return h('button.option', { onclick: () => start(t.id) },
+            h('div.grow', null, h('div.t', null, t.name),
+              h('div.d', null, `${n} exercice${n > 1 ? 's' : ''} · ${lastDoneLabel(t.id, date)}`)),
+            icon('play', 'sm'));
+        }),
+        h('button.option', { onclick: () => start(null) }, icon('plus'),
+          h('div.grow', null, h('div.t', null, 'Séance libre'), h('div.d', null, 'Partir d’une séance vide'))),
+        !state.templates.length ? h('button.btn.ghost.block', { style: { marginTop: '8px' }, onclick: () => { api.close(); go('/program'); } }, 'Aller au Programme') : null,
       ];
     },
   });
 }
 
-/** Démarre une séance planifiée (le jour même, rattachée à son item). */
-export function startPlanned(item) {
-  startSession({ templateId: item.templateId, plannedItemId: item.id });
-  go('/session');
-}
-
-/**
- * « Changer » : choisir n'importe quelle séance (ou séance libre) à démarrer
- * aujourd'hui (ou à une autre date, pour une saisie a posteriori).
- */
-export function openStartPicker() {
-  let date = todayISO();
+/** Feuille d'un jour de la semaine : séances faites, en ajouter une. */
+export function openDaySheet(date) {
+  const today = todayISO();
   openSheet({
-    title: 'Choisir une séance',
+    title: cap(fmtDateLong(date)),
     render: (api) => {
-      const start = async (templateId) => {
-        api.close();
-        if (templateId && date === todayISO()) {
-          const ok = await placeWithResolution(templateId, date, 'week', { silent: true });
-          if (!ok) return;
-        }
-        startSession({ templateId, date });
-        go('/session');
-      };
-      const dates = weekDates(todayISO()).filter((d) => d <= todayISO()).reverse();
+      const done = state.sessions.filter((s) => s.status === 'done' && s.date === date);
+      const runs = state.settings.runsEnabled ? state.runs.filter((r) => r.date === date) : [];
       return [
-        h('p.sheet-sub', null, 'Le planning s\'adapte : la séance prévue aujourd\'hui peut être intervertie, décalée ou sautée.'),
-        ...state.templates.map((t) => h('button.option', { onclick: () => start(t.id) },
-          h('div.grow', null, h('div.t', null, t.name), h('div.d', null, plannedHint(t.id, date))),
-          icon('play', 'sm'))),
-        h('button.option', { onclick: () => start(null) }, icon('plus'),
-          h('div.grow', null, h('div.t', null, 'Séance libre'), h('div.d', null, 'Partir d\'une séance vide'))),
-        h('div.field', { style: { marginTop: '16px' } },
-          h('label', null, 'Date de la séance'),
-          h('div.chips', null,
-            dates.map((d) => h(`button.chip${d === date ? '.on' : ''}`, { onclick: () => { date = d; api.refresh(); } },
-              d === todayISO() ? "Aujourd'hui" : fmtDateShort(d))),
-            h('input.input', { type: 'date', value: date, max: todayISO(), style: { marginTop: '8px' }, onchange: (e) => { if (e.target.value) { date = e.target.value; api.refresh(); } } }))),
+        ...done.map((s) => h('button.option', { onclick: () => { api.close(); go(`/history/${s.id}`); } },
+          icon('check'), h('div.grow', null, h('div.t', null, s.templateName || 'Séance'), h('div.d', null, 'Faite · voir le détail')))),
+        ...runs.map((r) => h('button.option', { onclick: () => { api.close(); openRunSheet(r.id); } },
+          icon('run'), h('div.grow', null, h('div.t', null, 'Course'), h('div.d', null, 'Voir la sortie')))),
+        !done.length && !runs.length ? h('p.sheet-sub', null, date > today ? 'Ce jour n’est pas encore arrivé.' : 'Rien d’enregistré ce jour.') : null,
+        date <= today && h('button.option', { onclick: () => { api.close(); openStartPicker(date); } },
+          icon('play'), h('div.grow', null, h('div.t', null, 'Commencer une séance ce jour'), h('div.d', null, 'Choisir parmi tes séances'))),
+        state.settings.runsEnabled && date <= today && h('button.option', { onclick: () => { api.close(); openRunSheet(null, date); } },
+          icon('run'), h('div.grow', null, h('div.t', null, 'Ajouter une sortie de course'), h('div.d', null, 'Distance, durée, allure'))),
       ];
     },
   });

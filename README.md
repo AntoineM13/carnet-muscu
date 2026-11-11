@@ -22,7 +22,7 @@ js/data/exercise-bank.js  BANQUE D'EXERCICES (FR/EN, muscles, description)
 js/data/muscles.js     groupes musculaires et leurs parties
 js/data/defaults.js    réglages par défaut
 js/domain/             logique métier pure (testable sans navigateur)
-  planning.js          planning par défaut + exceptions par semaine
+  planning.js          ancien planning (données conservées, plus affiché)
   progression.js       dernière performance, suggestions (module unique)
   session.js           séance en cours (supersets, dégressives, remplacements)
   stats.js             volume, 1RM estimé, records

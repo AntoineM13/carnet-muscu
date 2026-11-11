@@ -41,8 +41,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - Zones tactiles d'au moins 44 px. Confirmation uniquement pour les actions destructrices, toujours avec un « Annuler » de quelques secondes.
 - Principes UX :
   - valider une série en moins de 2 taps ;
-  - modifier le planning en 3 taps au maximum ;
-  - l'accueil montre « ma prochaine séance » en un tap et la semaine en un coup d'œil.
+  - l'accueil propose « Commencer une séance » (on choisit le jour, puis la séance : rien n'est présélectionné) et montre la semaine en un coup d'œil (séances faites).
 
 ## 4. Fonctionnalités
 
@@ -62,21 +61,10 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - **Bibliothèque par muscle** (`js/ui/exercise-browser.js`) : tuiles par groupe (« 5 à toi · 13 dans la banque ») → dans un groupe, sections par partie (haut / milieu / bas…), mes exercices d'abord (blanc), ceux de la banque ensuite (gris, bouton « + »), polyarticulaires avant isolations ; filtres type et matériel ; « Sollicitent aussi ce muscle » replié. La recherche (FR ou EN, sans accents) court-circuite les groupes. La fenêtre « Ajouter un exercice » des séances propose « Mes exercices » (rapide) ou « Par muscle + banque ».
 - Chaque exercice a des notes permanentes et un marqueur « douleur / à éviter » avec commentaire.
 
-### Planning
-- Un planning par défaut (jour de la semaine → séance), plus des exceptions semaine par semaine.
-- Une modification s'applique à « Cette semaine » (par défaut) ou à « Toutes les semaines ».
-- En cas de conflit :
-  - **Intervertir** (par défaut) ;
-  - **Décaler** : vers le prochain jour libre de la semaine, sinon « dès que possible » ;
-  - **Sauter**.
-- Statuts d'une séance planifiée : à faire, faite, sautée, décalée. « En retard » est calculé (date passée, pas faite) : un bandeau non bloquant le signale, sans pénalité.
-- Une séance sautée n'a aucun impact sur la progression ni sur les stats.
-- Prochaine séance proposée, dans cet ordre :
-  1. celle prévue aujourd'hui ;
-  2. sinon la plus ancienne en retard ;
-  3. sinon une séance « dès que possible » ;
-  4. sinon la prochaine prévue.
-  On peut toujours la changer (lien « Changer »), ou faire une séance libre.
+### Démarrer une séance (plus de planning imposé)
+- On configure ses séances dans l'onglet **Programme** (ajouter, modifier, supprimer des exercices). Pour s'entraîner : Accueil → « Commencer une séance » → **jour** (Aujourd'hui par défaut, Hier, ou Autre jour) → **séance** parmi celles configurées (avec « dernière fois il y a X j »), ou séance libre. Rien n'est présélectionné : on choisit toujours explicitement (retour du 2026-11-11 : un collègue avait démarré la séance proposée par erreur).
+- La semaine de l'accueil montre les séances faites (et les sorties de course) ; toucher un jour passé permet d'y ajouter une séance.
+- L'ancien planning (jour par défaut de chaque séance, exceptions, « en retard », intervertir / décaler / sauter) n'est **plus affiché**. Ses données (`state.schedule`, logique `js/domain/planning.js`) restent stockées et synchronisées pour compatibilité, et pourraient resservir.
 
 ### Séance
 - Une séance est une **copie** du modèle : la modifier ne change pas le programme, sauf avec « Définitivement » ou « Mettre à jour le programme » (proposé dans le résumé de fin).
@@ -162,3 +150,4 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-11-08 : analyse de l'export d'Antoine (7 séances) → incréments par matériel et par exercice, poids de corps pour tractions/dips, détection des dégressives saisies à part, repos > 15 min ignoré, fusion d'exercices, fond opaque sous la Dynamic Island. Les plages de reps de son programme (tout en 3 × 8-12 par défaut) sont à ajuster par Antoine dans l'app.
 - 2026-11-08 : muscles sur deux niveaux (groupes + parties, principal / secondaires) et type de mouvement, base de la banque d'exercices et de la recherche par filtres. Modèle 3D écarté (dépendance lourde, licence, lenteur) au profit d'une silhouette 2D cliquable, à tenter plus tard.
 - 2026-11-08 : banque d'exercices (~130, FR/EN, muscles, type, description) et banque commune ; bibliothèque refaite par groupe puis par partie (retour d'Antoine : la saisie des muscles demandait trop de clics) ; saisie des muscles simplifiée en un écran.
+- 2026-11-11 : fin du planning imposé (retour d'Antoine : un collègue a démarré la mauvaise séance, proposée d'office). L'accueil devient « Commencer une séance » : choix du jour puis de la séance, rien de présélectionné. Planning retiré de l'accueil, du Programme et des Réglages (données conservées, non affichées).

@@ -51,7 +51,6 @@ export function sessionCtx(session = null) {
  */
 export function startSession({ templateId = null, date = todayISO(), plannedItemId = null, form = 'normal' }) {
   const template = templateId ? getTemplate(templateId) : null;
-  if (template && !plannedItemId) plannedItemId = Plan.itemForStart(state.schedule, template.id, date)?.id || null;
   const session = Ses.createSession({ template, date, plannedItemId, form, ctx: { ...sessionCtx(), form } });
   saveDoc('sessions', session, { silent: true });
   saveMeta({ activeSessionId: session.id });
