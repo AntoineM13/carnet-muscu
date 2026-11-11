@@ -26,7 +26,7 @@ import { go, rerender } from '../core/router.js';
 import { openSheet, choose, confirmAction, toast } from '../ui/overlay.js';
 import { pickExercise } from '../ui/pickers.js';
 import { beep, vibrate, primeAudio } from '../ui/device.js';
-import { sessionTopExtras, exerciseExtras, FORMS, setForm, itemSuggestion } from './session-extras.js';
+import { exerciseExtras, suggestionsOn } from './session-extras.js';
 
 const LETTERS = 'ABCDEFGH';
 
@@ -134,7 +134,6 @@ function stepView(ctx) {
   const { step, session, idx } = ctx;
   const skipped = Ses.stepStatus(step) === 'skipped';
   return h('div.ses-step', null,
-    ...sessionTopExtras(ctx),
     ...step.items.map((item, k) => exerciseHead(ctx, item, k)),
     skipped
       ? h('div.banner', null, h('span.ic', null, icon('skip')), h('div.grow', null, 'Exercice sauté.',
@@ -142,7 +141,6 @@ function stepView(ctx) {
           onclick: () => { step.items.forEach((it) => { it.skipped = false; }); ctx.save(); },
         }, 'Le reprendre'))))
       : [
-        idx === 0 && warmupProposal(ctx),
         setsView(ctx),
         h('div.ses-tools', null,
           h('button.btn.sm.ghost', { onclick: () => { step.items.forEach((it) => Ses.addSet(it)); ctx.save(); } }, icon('plus', 'sm'), step.isSuperset ? 'Un tour' : 'Une série'),
@@ -182,11 +180,7 @@ function exerciseHead(ctx, item, k) {
     ex?.pain?.active && h('div.pain-box', null, icon('alert', 'sm'), h('div', null, h('strong', null, 'Douleur / à éviter'), ex.pain.comment ? ` — ${ex.pain.comment}` : '')),
     ex?.notes ? h('button.note-box.ex-notes', { onclick: () => editNotes(ex) }, ex.notes)
       : !step.isSuperset && h('button.link-btn.small.add-note', { onclick: () => editNotes(ex) }, icon('note', 'sm'), 'Ajouter une note'),
-    h('div.last-time', null,
-      h('span.eyebrow', null, 'Dernière fois'),
-      last ? h('span.num', null, formatSets(last.sets, fmtNum), h('span.faint', null, ` · ${fmtDateShort(last.date)}`))
-        : h('span.faint', null, 'Première fois')),
-    ...exerciseExtras(ctx, item));
+    ...exerciseExtras(ctx, item, last));
 }
 
 function editNotes(ex) {
@@ -239,32 +233,21 @@ function setRow(ctx, e) {
   h('span.set-val.num.grow', null, stageText(set, ex),
     ctx.step.isSuperset ? h('span.set-ex.ellipsis', null, ex?.name) : null),
   set.type !== 'normale' && set.type !== 'echauffement' ? h('span.badge.outline', null, type.label) : null,
-  !set.done && !ctx.editMode && set.type !== 'echauffement' && state.settings.suggestionsEnabled !== false ? h('span.set-goal', null, 'objectif') : null,
+  !set.done && !ctx.editMode && set.type !== 'echauffement' && suggestionsOn() ? h('span.set-goal', null, 'objectif') : null,
   set.done && set.restTakenSec != null ? h('span.set-rest.num', null, fmtDuration(set.restTakenSec)) : null,
   set.done ? h('span.set-check', null, icon('check', 'sm')) : h('span.set-todo'));
 }
 
-/** « Dernière fois » et « Objectif » de cette série, côte à côte (sans ambiguïté). */
-function setCompare(ctx, item, set, ex) {
+/** Rappel discret de la même série la dernière fois (utile quand l'objectif diffère). */
+function setLastLine(ctx, item, set, ex) {
+  if (!suggestionsOn()) return null; // sinon les chiffres SONT déjà ceux de la dernière fois
   const { session } = ctx;
   const index = item.sets.filter((s) => s.type !== 'echauffement').indexOf(set);
   const last = lastPerformance(item.exerciseId, state.sessions, { excludeSessionId: session.id, templateId: session.templateId, target: item.target });
-  const sugOn = state.settings.suggestionsEnabled !== false;
-  const sug = sugOn ? itemSuggestion(session, item) : null;
-  const c = setComparison(last, sug?.sets, index);
-  const fmt = (v) => {
-    if (!v) return '—';
-    const load = v.load == null ? '–' : ex?.loadMode === 'lest' ? (v.load === 0 ? 'PDC' : `${v.load > 0 ? '+' : ''}${fmtNum(v.load)} kg`) : `${fmtNum(v.load)} kg`;
-    return `${load} × ${v.reps ?? '–'}`;
-  };
-  return h(`div.set-compare${sugOn ? '' : '.single'}`, null,
-    h('div.sc-col.sc-last', null,
-      h('span.sc-k', null, last ? `Dernière fois · ${fmtDateShort(last.date)}` : 'Dernière fois'),
-      h('span.sc-v.num', null, c.last ? fmt(c.last) : last ? 'Pas de série ' + (index + 1) : 'Première fois')),
-    sugOn ? h('div.sc-col.sc-target', null,
-      h('span.sc-k', null, 'Objectif'),
-      h('span.sc-v.num', null, c.target ? fmt(c.target) : '—',
-        c.trend === 'up' ? icon('up', 'sm') : c.trend === 'down' ? icon('down', 'sm') : null)) : null);
+  const prev = setComparison(last, null, index).last;
+  if (!prev) return null;
+  const load = prev.load == null ? '–' : ex?.loadMode === 'lest' ? (prev.load === 0 ? 'PDC' : `${prev.load > 0 ? '+' : ''}${fmtNum(prev.load)} kg`) : `${fmtNum(prev.load)} kg`;
+  return h('div.set-last.num', null, 'dernière fois : ', h('strong', null, `${load} × ${prev.reps ?? '–'}`));
 }
 
 /** Carte de la série en cours : saisie + validation en 1 tap. */
@@ -307,7 +290,7 @@ function currentSetCard(ctx, e) {
         isWarm ? 'Échauffement' : ctx.step.isSuperset ? ex?.name : `Série ${e.round + 1} sur ${item.sets.filter((s) => s.type !== 'echauffement').length}`),
       set.type === 'echec' && h('span.badge.outline', null, 'Échec'),
       h('button.icon-btn', { 'aria-label': 'Détails de la série', onclick: () => openSetSheet(ctx, item.id, set.id) }, icon('more'))),
-    !isWarm && !ctx.editMode ? setCompare(ctx, item, set, ex) : null,
+    !isWarm && !ctx.editMode ? setLastLine(ctx, item, set, ex) : null,
     set.stages.map((stg, i) => h('div.stage', null,
       i > 0 && h('div.stage-head', null, h('span.eyebrow', null, `Palier ${i + 1} · dégressive`),
         h('button.link-btn.small', { onclick: () => { Ses.removeStage(set, i); ctx.save(); } }, 'Retirer')),
@@ -426,20 +409,6 @@ function warmupFor(item) {
     step: item.target.increment || 2.5,
     minLoad: ex?.equipment === 'barre' ? state.settings.barWeight : 0,
   });
-}
-
-function warmupProposal(ctx) {
-  const item = ctx.step.items.find((it) => !it.replacedBy);
-  if (!item || ctx.editMode || item.warmupDismissed) return null;
-  if (item.sets.some((s) => s.type === 'echauffement' || s.done)) return null;
-  const list = warmupFor(item);
-  if (!list.length) return null;
-  return h('div.warmup-card', null,
-    h('div.row-flex', null, icon('flame', 'sm'), h('strong.grow', null, 'Échauffement proposé')),
-    h('div.num.muted', { style: { margin: '6px 0 10px' } }, list.map((w) => `${fmtNum(w.load)} × ${w.reps}`).join('  ·  ')),
-    h('div.row-flex', null,
-      h('button.btn.sm.primary.grow', { onclick: () => { Ses.addWarmups(item, list); ctx.save(); } }, 'Ajouter'),
-      h('button.btn.sm.ghost', { onclick: () => { item.warmupDismissed = true; ctx.save(); } }, 'Ignorer')));
 }
 
 function openWarmup(ctx) {
@@ -633,7 +602,6 @@ async function sessionMenu(ctx) {
       step && { value: 'skip', label: skipped ? 'Reprendre l’exercice' : 'Sauter l’exercice', icon: 'skip' },
       { value: 'add', label: 'Ajouter un exercice', icon: 'plus' },
       { value: 'list', label: 'Réorganiser la séance', icon: 'list' },
-      !editMode && { value: 'form', label: 'Forme du jour', icon: 'bolt', help: FORMS.find((f) => f.value === (session.form || 'normal'))?.label },
       { value: 'date', label: 'Changer la date', icon: 'calendar', help: fmtDateShort(session.date) },
       !editMode && { value: 'abandon', label: 'Abandonner la séance', icon: 'trash', danger: true, help: 'Annulable quelques secondes' },
     ].filter(Boolean),
@@ -643,10 +611,6 @@ async function sessionMenu(ctx) {
   if (v === 'add') addExercise(ctx);
   if (v === 'list') openStepList(ctx);
   if (v === 'date') changeDate(session);
-  if (v === 'form') {
-    const f = await choose({ title: 'Forme du jour', subtitle: '« KO » bascule les suggestions en mode Récup / volume. Les séries déjà validées ou modifiées ne changent pas.', options: FORMS.map((x) => ({ ...x, on: x.value === (session.form || 'normal') })) });
-    if (f) { setForm(session, f); ctx.save(); }
-  }
   if (v === 'abandon') {
     const ok = await confirmAction({ title: 'Abandonner la séance ?', message: 'Toutes les séries saisies seront supprimées. Tu pourras annuler juste après.', confirmLabel: 'Abandonner' });
     if (ok) { go('/'); deleteSession(session, 'Séance abandonnée'); }

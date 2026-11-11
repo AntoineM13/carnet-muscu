@@ -1,14 +1,18 @@
 /**
- * Écran de séance — éléments de PROGRESSION :
- *  - « Forme du jour » (Frais / Normal / KO) en début de séance ;
- *  - carte « Aujourd'hui » par exercice : mode suggéré (modifiable) + cible.
- * La logique elle-même est dans domain/progression.js.
+ * Écran de séance — éléments de PROGRESSION : une seule carte par exercice,
+ * « Dernière fois » puis, si les suggestions sont activées, la consigne du
+ * jour (Augmenter / Stabiliser / Récup) avec ses chiffres. Le mode se change
+ * derrière « Changer ». La logique elle-même est dans domain/progression.js.
+ * (La « Forme du jour » a été retirée le 2026-11-11 : on garde FORMS/setForm
+ * pour les séances anciennes qui l'ont enregistrée.)
  */
 import { h } from '../core/h.js';
 import { state, getExercise } from '../core/store.js';
+import { fmtNum, fmtDateShort } from '../core/util.js';
 import { suggest, MODES } from '../domain/progression.js';
 import { applySuggestion } from '../domain/session.js';
-import { segmented } from '../ui/components.js';
+import { formatSets } from '../domain/stats.js';
+import { choose } from '../ui/overlay.js';
 import { icon } from '../ui/icons.js';
 
 export const FORMS = [
@@ -35,34 +39,39 @@ export function setForm(session, form) {
   }
 }
 
-export function sessionTopExtras(ctx) {
-  const { session, idx, editMode } = ctx;
-  if (editMode || idx !== 0 || state.settings.suggestionsEnabled === false) return [];
-  const started = session.items.some((it) => it.sets.some((s) => s.done && s.type !== 'echauffement'));
-  if (started) return [];
-  return [h('div.form-card', null,
-    h('div.row-flex', null, h('span.eyebrow.grow', null, 'Forme du jour'),
-      h('span.tiny.faint', null, session.form === 'ko' ? 'Suggestions en mode Récup / volume' : 'Modifiable dans le menu')),
-    segmented(FORMS, session.form || 'normal', (v) => { setForm(session, v); ctx.save(); }, 'accent'))];
-}
+export const suggestionsOn = () => state.settings.suggestionsEnabled !== false;
 
-export function exerciseExtras(ctx, item) {
+/** Carte « Dernière fois » + consigne du jour (une seule fois par exercice). */
+export function exerciseExtras(ctx, item, last) {
   const { session, editMode } = ctx;
-  if (editMode || item.replacedBy || state.settings.suggestionsEnabled === false) return [];
-  const sug = itemSuggestion(session, item);
-  if (!sug) return [];
-  const pick = (m) => {
+  const lastRow = h('div.goal-last', null,
+    h('span.eyebrow', null, last ? `Dernière fois · ${fmtDateShort(last.date)}` : 'Dernière fois'),
+    last ? h('span.num.goal-last-v', null, formatSets(last.sets, fmtNum)) : h('span.faint', null, 'Première fois'));
+  const sug = !editMode && !item.replacedBy && suggestionsOn() ? itemSuggestion(session, item) : null;
+  if (!sug) return [h('div.goal-card', null, lastRow)];
+  const pick = async () => {
+    const m = await choose({
+      title: 'Consigne du jour',
+      subtitle: 'Les séries déjà validées ou modifiées à la main ne changent pas.',
+      options: Object.entries(MODES).map(([k, v]) => ({
+        value: k, label: v.label, on: k === sug.mode,
+        help: k === sug.auto ? 'Proposé par l’app' : { augmenter: 'Charge + incrément', stabiliser: 'Même charge, +1 rep', recup: 'Charge réduite, plus de reps' }[k],
+      })),
+    });
+    if (!m) return;
     item.mode = m === sug.auto ? null : m;
     const next = itemSuggestion(session, item);
     if (next) applySuggestion(item, next.sets);
     ctx.save();
   };
-  return [h(`div.sug-card.mode-${sug.mode}`, null,
-    h('div.sug-head', null,
-      h('span.eyebrow', null, 'Objectif du jour'),
-      h('div.sug-modes', null, Object.entries(MODES).map(([k, v]) => h(`button${sug.mode === k ? '.on' : ''}`, {
-        'aria-pressed': String(sug.mode === k), onclick: () => pick(k),
-      }, v.label, k === sug.auto ? h('span.auto', null, 'auto') : null)))),
-    h('div.sug-line.num', null, icon(sug.mode === 'augmenter' ? 'up' : sug.mode === 'recup' ? 'down' : 'repeat', 'sm'), sug.headline),
-    h('div.sug-reason', null, sug.reason))];
+  const ic = sug.mode === 'augmenter' ? 'up' : sug.mode === 'recup' ? 'down' : 'repeat';
+  return [h(`div.goal-card.mode-${sug.mode}`, null,
+    lastRow,
+    h('div.goal-sep'),
+    h('div.goal-row', null,
+      h('span.goal-mode', null, icon(ic, 'sm'), MODES[sug.mode].label),
+      h('span.goal-v.num', null, sug.headline)),
+    h('div.goal-foot', null,
+      h('span.goal-reason.grow', null, sug.reason),
+      h('button.link-btn.small.goal-change', { onclick: pick }, 'Changer', icon('chevron', 'sm'))))];
 }

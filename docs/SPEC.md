@@ -83,7 +83,7 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - Types de série : échauffement, normale, dégressive, échec. Les échauffements sont exclus du volume.
 - **Dégressives** : plusieurs paliers dans la même série. La charge proposée pour chaque palier (−20 % par défaut) n'est qu'une proposition, toujours modifiable à la main. Le chrono démarre après le dernier palier. Le volume compte tous les paliers ; les records et la progression ne comptent que le premier.
   Si une série est validée moins de 20 s après la précédente avec une charge au moins 15 % plus basse, l'app propose « C'était une dégressive ? → Regrouper ».
-- **Échauffement** : proposé sur le premier exercice (à 50, 70 et 85 % de la charge de travail), et disponible à la demande sur les autres.
+- **Échauffement** : bouton « Échauffement » sous les séries (à 50, 70 et 85 % de la charge de travail). Plus de carte « Échauffement proposé » (2026-11-11 : trop de place).
 - Calculateur de disques pour les exercices à la barre (poids de la barre et disques disponibles réglables).
 - Chrono de repos : −15 s, +15 s, Passer, alerte visuelle et bip en fin de repos. La vibration n'est pas supportée sur iOS. **Désactivable** (Réglages → Saisie → Chrono de repos) pour ceux qui utilisent leur propre chrono ; le réglage suit le compte.
 - Bouton « Comme la dernière fois ». Les séries suivantes reprennent la charge réellement validée.
@@ -92,9 +92,9 @@ Document de référence du projet. **Claude le tient à jour à chaque évolutio
 - **Augmenter** : si toutes les séries de travail ont atteint le **haut** de la plage (double progression), on ajoute l'incrément et on repart au bas de la plage.
 - **Stabiliser** : sinon, même charge, avec un objectif de +1 rep par série.
 - **Récup / volume** : charge −10 % (réglable), reps au haut de la plage et une série de plus.
-- « Forme du jour » (Frais / Normal / KO) en début de séance. **KO** bascule tout en Récup. Le mode reste modifiable exercice par exercice.
-- **Désactivables** (Réglages → Saisie → Suggestions de progression, suit le compte) : coupées, plus de carte « Objectif du jour » ni de « Forme du jour », et les séries reprennent exactement la dernière fois.
-- **Lisibilité** (retour du 2026-11-11 : un collègue a pris la suggestion pour ce qu'il avait fait) : la série en cours affiche côte à côte « Dernière fois · date » (gris) et « Objectif » (vert, flèche si on monte ou descend), pour la même série (S1 face à S1, logique `setComparison`) ; les séries à venir portent la mention « objectif ».
+- **Plus de « Forme du jour »** (retirée le 2026-11-11, choix d'Antoine) : faire fluctuer toutes les suggestions selon l'état du jour brouillait les repères. Un jour sans énergie, on choisit « Récup / volume » exercice par exercice. Le questionnaire de fin reste informatif. (`session.form` des anciennes séances est conservé.)
+- **Désactivables** (Réglages → Saisie → Suggestions de progression, suit le compte) : coupées, la carte de l'exercice ne montre que « Dernière fois », et les séries reprennent exactement la dernière fois (aucun doublon).
+- **Affichage** (retour du 2026-11-11 : un collègue a pris la suggestion pour ce qu'il avait fait ; puis : informations en double) : **une seule carte par exercice** : « Dernière fois · date » (toutes les séries, en petit) puis la **consigne** (Augmenter / Stabiliser / Récup, avec ses chiffres et sa raison en une ligne). Le mode se change derrière « Changer › ». Dans la série en cours, une petite ligne « dernière fois : 60 kg × 12 » (même série, logique `setComparison`), seulement si les suggestions sont activées ; les séries à venir portent la mention « objectif ».
 - Les suggestions préremplissent les séries et restent indicatives. Les échauffements et les paliers de dégressive sont ignorés.
 - **Référence = même contexte** : un exercice peut être fait en force dans une séance et en volume dans une autre (ex. développé décliné barre). La suggestion se base sur la dernière fois dans la **même séance modèle**, sinon avec la **même plage de reps**, sinon la dernière fois tout court.
 
@@ -157,3 +157,4 @@ Une ligne par évolution ou décision, la plus récente en bas : `AAAA-MM-JJ : q
 - 2026-11-11 : « banque » renommée « Catalogue » dans l'interface (« 6 à toi · 12 suggestions », « Partager dans le catalogue ») : le mot « banque » ne parlait pas aux collègues.
 - 2026-11-11 : suggestions de progression désactivables (comme le chrono) et comparaison « Dernière fois / Objectif » sur chaque série (un collègue a confondu la suggestion avec sa séance précédente). Par défaut, les suggestions restent activées.
 - 2026-11-11 : jeu de test intégré à la version de test (4 semaines de séances fictives, ajout / retrait en un bouton), à la demande d'Antoine pour voir les suggestions et l'onglet Progrès sans s'entraîner.
+- 2026-11-11 : écran d'exercice simplifié (retour d'Antoine) : « Forme du jour » supprimée, une seule carte « Dernière fois + consigne du jour » (mode changeable derrière « Changer »), rappel discret de la dernière fois dans la série, carte d'échauffement remplacée par le bouton « Échauffement ».

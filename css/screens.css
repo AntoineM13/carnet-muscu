@@ -145,8 +145,6 @@ details.archived summary { list-style: none; cursor: pointer; }
 .last-time { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 15px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
 .last-time .eyebrow { font-size: 11px; }
 
-.warmup-card { padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px dashed var(--border-strong); }
-.warmup-card svg { color: var(--warn); }
 
 .sets { display: flex; flex-direction: column; gap: 6px; }
 .set-row {
@@ -238,17 +236,6 @@ details.archived summary { list-style: none; cursor: pointer; }
 
 /* Progression : forme du jour et suggestion */
 .form-card { padding: 12px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
-.sug-card { padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border-strong); display: flex; flex-direction: column; gap: 6px; }
-.sug-card.mode-augmenter { border-color: var(--accent-line); }
-.sug-head { display: flex; flex-direction: column; gap: 8px; }
-.sug-modes { display: flex; gap: 6px; }
-.sug-modes button { flex: 1; min-height: 38px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0 4px; white-space: nowrap; }
-.sug-modes button.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-line); }
-.sug-modes .auto { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.7; }
-.sug-line { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 20px; font-weight: 650; margin-top: 2px; }
-.sug-line svg { color: var(--accent); }
-.mode-recup .sug-line svg { color: var(--warn); }
-.sug-reason { font-size: 13px; color: var(--text-2); }
 
 /* Objectifs */
 .goal-card { display: block; width: 100%; text-align: left; padding: 16px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--border); }
@@ -276,15 +263,23 @@ details.archived summary { list-style: none; cursor: pointer; }
 .sync-lead { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; }
 form.card .lead { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--surface-3); }
 
-/* Série en cours : « Dernière fois » (gris) vs « Objectif » (accent), côte à côte. */
-.set-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.set-compare.single { grid-template-columns: 1fr; }
-.set-compare .sc-col { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 10px; min-width: 0; }
-.set-compare .sc-last { background: var(--surface-2); }
-.set-compare .sc-target { background: var(--accent-soft); border: 1px solid var(--accent-line); }
-.set-compare .sc-k { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.set-compare .sc-target .sc-k { color: var(--accent); }
-.set-compare .sc-v { display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600; color: var(--text-2); }
-.set-compare .sc-target .sc-v { color: var(--text); }
-.set-compare .sc-v svg { width: 15px; height: 15px; color: var(--accent); }
+/* Carte unique par exercice : dernière fois, puis consigne du jour. */
+.goal-card { padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.goal-card.mode-augmenter { border-color: var(--accent-line); }
+.goal-last { display: flex; flex-direction: column; gap: 2px; }
+.goal-last .eyebrow { font-size: 11px; }
+.goal-last-v { font-size: 15px; color: var(--text-2); }
+.goal-sep { height: 1px; background: var(--border); }
+.goal-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.goal-mode { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); }
+.goal-mode svg { width: 16px; height: 16px; }
+.mode-augmenter .goal-mode { color: var(--accent); }
+.mode-recup .goal-mode svg { color: var(--warn); }
+.goal-v { font-family: var(--font-display); font-size: 20px; font-weight: 650; }
+.goal-foot { display: flex; align-items: center; gap: 10px; }
+.goal-reason { font-size: 13px; color: var(--text-2); }
+.goal-change { display: inline-flex; align-items: center; gap: 2px; color: var(--accent); white-space: nowrap; min-height: 44px; }
+.ex-head.compact .goal-card { padding: 10px 12px; }
+.set-last { font-size: 13px; color: var(--text-3); margin-top: -4px; }
+.set-last strong { color: var(--text-2); font-weight: 600; }
 .set-row .set-goal { font-size: 12px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
